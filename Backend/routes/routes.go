@@ -51,35 +51,67 @@ func AuthMiddleware(c *fiber.Ctx) error {
 		})
 	}
 
-	c.Locals("user_id", uint(claims["user_id"].(float64)))
-	c.Locals("email", claims["email"].(string))
+	userIDFloat, ok := claims["user_id"].(float64)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid user_id claim",
+		})
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid email claim",
+		})
+	}
+
+	c.Locals("user_id", uint(userIDFloat))
+	c.Locals("email", email)
 
 	return c.Next()
 }
 
 func SetupRoutes(app *fiber.App) {
-	// Auth routes (públicas)
+	// =========================
+	// AUTH (públicas)
+	// =========================
 	auth := app.Group("/api/auth")
 	auth.Post("/login", controller.SignIn)
 	auth.Post("/signup", controller.SignUp)
 
-	// Protected auth routes
+	// Auth protegidas
 	authProtected := app.Group("/api/auth").Use(AuthMiddleware)
 	authProtected.Get("/profile", controller.GetProfile)
 
-	// Product routes (requieren autenticación)
+	// =========================
+	// PRODUCTOS (protegidas)
+	// =========================
 	productos := app.Group("/api/productos").Use(AuthMiddleware)
-	productos.Post("", controller.CreateProduct)                  // Crear producto
-	productos.Get("", controller.GetProducts)                     // Obtener todos
-	productos.Get("/:id", controller.GetProductByID)              // Obtener por ID
-	productos.Get("/codigo/:codigo", controller.GetProductByCode) // Obtener por código
-	productos.Put("/:id", controller.UpdateProduct)               // Actualizar
-	productos.Delete("/:id", controller.DeleteProduct)            // Eliminar
+	productos.Post("/", controller.CreateProduct)
+	productos.Get("/", controller.GetProducts)
+	productos.Get("/codigo/:codigo", controller.GetProductByCodigo) // ✨ Por código
+	productos.Get("/:id", controller.GetProductByID)
+	productos.Put("/:id", controller.UpdateProduct)
+	productos.Delete("/:id", controller.DeleteProduct)
 
-	// Movement routes (requieren autenticación)
+	// =========================
+	// MOVIMIENTOS/FACTURAS (protegidas)
+	// =========================
 	movimientos := app.Group("/api/movimientos").Use(AuthMiddleware)
-	movimientos.Post("/entrada", controller.CreateInMovement) // Entrada de mercadería
-	movimientos.Post("/salida", controller.CreateOutMovement) // Salida de mercadería
-	movimientos.Get("", controller.GetMovements)              // Obtener movimientos (con filtros)
-	movimientos.Get("/:id", controller.GetMovementByID)       // Obtener un movimiento
+	// Rutas fijas primero
+	movimientos.Post("/entrada", controller.CreateInMovement)
+	movimientos.Post("/salida", controller.CreateOutMovement)
+	movimientos.Get("/", controller.GetMovements)
+
+	// ✨ ACTUALIZADO: Solo anula si Estado = true
+	movimientos.Put("/:id/cancelar", controller.CancelMovement)
+
+	// ✨ Modificar cantidad del mismo producto
+	movimientos.Put("/:id/editar-cantidad", controller.UpdateMovementQuantity)
+
+	// ✨ NUEVO: Cambiar el producto completo
+	movimientos.Put("/:id/editar-producto", controller.UpdateMovementProduct)
+
+	// Paramétrica al final
+	movimientos.Get("/:id", controller.GetMovementByID)
 }
