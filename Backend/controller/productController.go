@@ -6,7 +6,10 @@ import (
 	"sanJoseProyect/models"
 )
 
-// CreateProduct - Crea un nuevo producto
+// ============================================
+// PRODUCTOS
+// ============================================
+
 func CreateProduct(c *fiber.Ctx) error {
 	req := new(models.CreateProductRequest)
 	if err := c.BodyParser(req); err != nil {
@@ -15,19 +18,24 @@ func CreateProduct(c *fiber.Ctx) error {
 		})
 	}
 
-	// Validar campos requeridos
-	if req.Codigo == "" || req.Descripcion == "" || req.Precio <= 0 {
+	if req.Descripcion == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
-			Error: "Todos los campos son requeridos",
+			Error: "La descripción es obligatoria",
 		})
 	}
 
-	// Crear producto
+	// Verificar que el código no exista
+	var existente models.Product
+	if err := database.DB.Where("codigo = ?", req.Codigo).First(&existente).Error; err == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
+			Error: "El código de producto ya existe",
+		})
+	}
+
 	producto := models.Product{
 		Codigo:      req.Codigo,
 		Descripcion: req.Descripcion,
 		Stock:       req.Stock,
-		Precio:      req.Precio,
 	}
 
 	if err := database.DB.Create(&producto).Error; err != nil {
@@ -36,58 +44,44 @@ func CreateProduct(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"mensaje":  "Producto creado correctamente",
-		"producto": producto,
-	})
+	return c.Status(fiber.StatusCreated).JSON(producto)
 }
 
-// GetProducts - Obtiene todos los productos
 func GetProducts(c *fiber.Ctx) error {
 	var productos []models.Product
-
 	if err := database.DB.Find(&productos).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
 			Error: "Error al obtener productos",
 		})
 	}
-
-	return c.Status(fiber.StatusOK).JSON(productos)
+	return c.JSON(productos)
 }
 
-// GetProductByID - Obtiene un producto por ID
 func GetProductByID(c *fiber.Ctx) error {
 	id := c.Params("id")
-
 	var producto models.Product
 	if err := database.DB.First(&producto, id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(models.ErrorResponse{
 			Error: "Producto no encontrado",
 		})
 	}
-
-	return c.Status(fiber.StatusOK).JSON(producto)
+	return c.JSON(producto)
 }
 
-// GetProductByCode - Obtiene un producto por código
-func GetProductByCode(c *fiber.Ctx) error {
+func GetProductByCodigo(c *fiber.Ctx) error {
 	codigo := c.Params("codigo")
-
 	var producto models.Product
 	if err := database.DB.Where("codigo = ?", codigo).First(&producto).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(models.ErrorResponse{
 			Error: "Producto no encontrado",
 		})
 	}
-
-	return c.Status(fiber.StatusOK).JSON(producto)
+	return c.JSON(producto)
 }
 
-// UpdateProduct - Actualiza un producto
 func UpdateProduct(c *fiber.Ctx) error {
 	id := c.Params("id")
 	req := new(models.UpdateProductRequest)
-
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
 			Error: "Solicitud inválida",
@@ -101,33 +95,34 @@ func UpdateProduct(c *fiber.Ctx) error {
 		})
 	}
 
-	// Actualizar solo los campos proporcionados
-	if req.Codigo != "" {
-		producto.Codigo = req.Codigo
+	// Si se envía un nuevo código, verificar que no exista
+	if req.Codigo != nil && *req.Codigo != producto.Codigo {
+		var existente models.Product
+		if err := database.DB.Where("codigo = ? AND id != ?", *req.Codigo, producto.ID).First(&existente).Error; err == nil {
+			return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
+				Error: "El código de producto ya existe",
+			})
+		}
+		producto.Codigo = *req.Codigo
 	}
+
 	if req.Descripcion != "" {
 		producto.Descripcion = req.Descripcion
 	}
+
 	if req.Stock > 0 {
 		producto.Stock = req.Stock
-	}
-	if req.Precio > 0 {
-		producto.Precio = req.Precio
 	}
 
 	if err := database.DB.Save(&producto).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
-			Error: "Error al actualizar el producto",
+			Error: "Error al actualizar producto",
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"mensaje":  "Producto actualizado correctamente",
-		"producto": producto,
-	})
+	return c.JSON(producto)
 }
 
-// DeleteProduct - Elimina un producto
 func DeleteProduct(c *fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -140,11 +135,11 @@ func DeleteProduct(c *fiber.Ctx) error {
 
 	if err := database.DB.Delete(&producto).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
-			Error: "Error al eliminar el producto",
+			Error: "Error al eliminar producto",
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+	return c.JSON(fiber.Map{
 		"mensaje": "Producto eliminado correctamente",
 	})
 }
