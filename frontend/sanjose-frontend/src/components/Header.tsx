@@ -44,7 +44,7 @@ export default function Header() {
               Bienvenido
             </h2>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-              Pescadería
+              San Jose
             </h1>
           </div>
         </div>

@@ -89,7 +89,7 @@ export default function Sidebar() {
             {!collapsed && (
               <div className="animate-fadeIn">
                 <h1 className="font-bold text-xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                  PescaApp
+                  San Jose
                 </h1>
                 <p className="text-xs text-cyan-300/80 font-medium">Gestión de Stock</p>
               </div>

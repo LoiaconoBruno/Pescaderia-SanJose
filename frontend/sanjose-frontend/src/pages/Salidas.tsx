@@ -27,10 +27,7 @@ type FormData = {
 };
 
 export default function Salidas() {
-  // ✅ Productos (para validar stock + actualizar stock luego de salida)
   const { productos, fetchProductos } = useProductos();
-
-  // ✅ Movimientos (le pasamos refreshProductos)
   const { movimientos, isLoading, error, createSalida } = useMovimientos({
     refreshProductos: fetchProductos,
   });
@@ -51,7 +48,6 @@ export default function Salidas() {
   const [formError, setFormError] = useState("");
 
   const openModal = async () => {
-    // ✅ refresca productos para que el stock del select sea actual
     try {
       await fetchProductos();
     } catch { }
@@ -83,7 +79,7 @@ export default function Salidas() {
     }
 
     if (producto.stock < formData.cantidad) {
-      setFormError(`Stock insuficiente. Disponible: ${producto.stock} ${producto.tipo_cantidad || "u"}`);
+      setFormError(`Stock insuficiente. Disponible: ${producto.stock} u`);
       setIsSubmitting(false);
       return;
     }
@@ -141,25 +137,25 @@ export default function Salidas() {
   }, [movimientos, searchTerm]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-red-50">
-      <main className="max-w-7xl mx-auto p-8">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-red-50 pb-6">
+      <main className="max-w-7xl mx-auto px-4 py-4 md:p-8">
         {/* Header */}
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="bg-gradient-to-br from-red-500 to-orange-600 p-3 rounded-xl shadow-lg">
-                <TrendingDown className="w-7 h-7 text-white" />
-              </div>
-              <h3 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-                Salidas de Mercadería
-              </h3>
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="bg-gradient-to-br from-red-500 to-orange-600 p-2.5 rounded-xl shadow-lg shrink-0">
+              <TrendingDown className="w-5 h-5 md:w-7 md:h-7 text-white" />
             </div>
-            <p className="text-slate-600 ml-16">Registra ventas y despachos</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+                Salidas
+              </h3>
+              <p className="text-slate-600 text-sm md:text-base mt-1">Registra ventas y despachos</p>
+            </div>
           </div>
 
           <button
             onClick={openModal}
-            className="flex items-center gap-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white px-6 py-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 font-medium"
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white px-5 py-3.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95 font-medium"
           >
             <Plus size={20} />
             Nueva Salida
@@ -168,28 +164,28 @@ export default function Salidas() {
 
         {/* Success Alert */}
         {successMessage && (
-          <div className="bg-green-50 border-l-4 border-green-500 rounded-xl p-4 mb-6 flex gap-3 items-center shadow-sm animate-slideIn">
-            <div className="bg-green-100 p-2 rounded-lg">
-              <CheckCircle className="text-green-600" size={20} />
+          <div className="bg-green-50 border-l-4 border-green-500 rounded-xl p-3.5 mb-4 flex gap-3 items-start shadow-sm animate-slideIn">
+            <div className="bg-green-100 p-1.5 rounded-lg shrink-0">
+              <CheckCircle className="text-green-600" size={18} />
             </div>
-            <p className="text-green-700 font-medium">{successMessage}</p>
+            <p className="text-green-700 font-medium text-sm">{successMessage}</p>
           </div>
         )}
 
         {/* Error Alert */}
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-4 mb-6 flex gap-3 items-center shadow-sm animate-slideIn">
-            <div className="bg-red-100 p-2 rounded-lg">
-              <AlertCircle className="text-red-600" size={20} />
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-3.5 mb-4 flex gap-3 items-start shadow-sm animate-slideIn">
+            <div className="bg-red-100 p-1.5 rounded-lg shrink-0">
+              <AlertCircle className="text-red-600" size={18} />
             </div>
-            <p className="text-red-700 font-medium">{error}</p>
+            <p className="text-red-700 font-medium text-sm">{error}</p>
           </div>
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           <StatCard
-            icon={<Calendar className="w-6 h-6 text-red-600" />}
+            icon={<Calendar className="w-5 h-5 md:w-6 md:h-6 text-red-600" />}
             label="Salidas Hoy"
             value={salidasHoy.length}
             gradientClassName="bg-gradient-to-r from-red-500 to-orange-500"
@@ -197,7 +193,7 @@ export default function Salidas() {
             valueClassName="text-red-600"
           />
           <StatCard
-            icon={<Package className="w-6 h-6 text-orange-600" />}
+            icon={<Package className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />}
             label="Total"
             value={totalSalidas}
             gradientClassName="bg-gradient-to-r from-orange-500 to-amber-500"
@@ -205,12 +201,12 @@ export default function Salidas() {
             valueClassName="text-orange-600"
           />
           <StatCard
-            icon={<Hash className="w-6 h-6 text-rose-600" />}
+            icon={<Hash className="w-5 h-5 md:w-6 md:h-6 text-rose-600" />}
             label="Cantidad Total"
             value={
               <span>
                 {cantidadTotal}
-                <span className="text-xl ml-1 text-slate-500">items</span>
+                <span className="text-lg md:text-xl ml-1 text-slate-500">u</span>
               </span>
             }
             gradientClassName="bg-gradient-to-r from-rose-500 to-pink-500"
@@ -220,70 +216,102 @@ export default function Salidas() {
         </div>
 
         {/* Search */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="relative group">
             <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-500 transition-colors"
-              size={20}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-red-500 transition-colors"
+              size={18}
             />
             <input
               type="text"
               placeholder="Buscar por código o descripción..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all duration-200 bg-white/80 backdrop-blur-sm shadow-sm"
+              className="w-full pl-11 pr-4 py-3.5 text-sm border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all duration-200 bg-white/80 backdrop-blur-sm shadow-sm"
             />
           </div>
         </div>
 
-        {/* Table */}
+        {/* Mobile Cards / Desktop Table */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
           {isLoading ? (
             <Loader text="Cargando salidas..." />
           ) : filteredMovimientos.length === 0 ? (
             <EmptyStateSalidas onAdd={openModal} />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
-                  <tr>
-                    <Th>Fecha</Th>
-                    <Th>Código</Th>
-                    <Th>Descripción</Th>
-                    <Th>Cantidad</Th>
-                    <Th>Estado</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMovimientos.map((m) => (
-                    <tr
-                      key={m.id}
-                      className="border-b border-slate-100 hover:bg-red-50/50 transition-all duration-200"
-                    >
-                      <td className="px-6 py-4 text-sm text-slate-900 font-medium">
+            <>
+              {/* Mobile View - Cards */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {filteredMovimientos.map((m) => (
+                  <div key={m.id} className="p-4 hover:bg-red-50/50 transition-colors">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-mono text-xs text-slate-500 mb-1">
+                          #{m.producto?.codigo}
+                        </div>
+                        <div className="font-medium text-slate-900 text-sm truncate">
+                          {m.producto?.descripcion || m.descripcion}
+                        </div>
+                      </div>
+                      <span className="ml-3 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md whitespace-nowrap">
+                        -{Math.abs(m.cantidad)} u
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-600">
                         {new Date(m.fecha).toLocaleDateString("es-AR")}
-                      </td>
-                      <td className="px-6 py-4 text-slate-700 font-mono">
-                        {m.producto?.codigo}
-                      </td>
-                      <td className="px-6 py-4 text-slate-700">
-                        {m.producto?.descripcion || m.descripcion}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="px-4 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md">
-                          -{Math.abs(m.cantidad)} {m.producto?.tipo_cantidad || "u"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-100 text-green-700">
-                          ✓ Completada
-                        </span>
-                      </td>
+                      </span>
+                      <span className="px-2 py-1 rounded-md font-semibold bg-green-100 text-green-700">
+                        ✓ Completada
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop View - Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-slate-900">Fecha</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-slate-900">Código</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-slate-900">Descripción</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-slate-900">Cantidad</th>
+                      <th className="px-6 py-4 text-left text-sm font-bold text-slate-900">Estado</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredMovimientos.map((m) => (
+                      <tr
+                        key={m.id}
+                        className="border-b border-slate-100 hover:bg-red-50/50 transition-all duration-200"
+                      >
+                        <td className="px-6 py-4 text-sm text-slate-900 font-medium">
+                          {new Date(m.fecha).toLocaleDateString("es-AR")}
+                        </td>
+                        <td className="px-6 py-4 text-slate-700 font-mono text-sm">
+                          {m.producto?.codigo}
+                        </td>
+                        <td className="px-6 py-4 text-slate-700 text-sm">
+                          {m.producto?.descripcion || m.descripcion}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="px-4 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md">
+                            -{Math.abs(m.cantidad)} u
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-100 text-green-700">
+                            ✓ Completada
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 
@@ -296,12 +324,12 @@ export default function Salidas() {
               setFormError("");
             }}
           >
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {formError && (
                 <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-3 flex gap-2 animate-shake">
                   <AlertCircle
                     className="text-red-600 flex-shrink-0 mt-0.5"
-                    size={20}
+                    size={18}
                   />
                   <p className="text-red-700 text-sm font-medium">{formError}</p>
                 </div>
@@ -323,12 +351,12 @@ export default function Salidas() {
                   required
                   value={formData.producto_id}
                   onChange={(e) => handleProductoChange(parseInt(e.target.value))}
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
+                  className="w-full px-4 py-3 text-sm border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
                 >
                   <option value={0}>Selecciona un producto</option>
                   {productos.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.codigo} - {p.descripcion} (Stock: {p.stock} {p.tipo_cantidad || "u"})
+                      {p.codigo} - {p.descripcion} (Stock: {p.stock} u)
                     </option>
                   ))}
                 </select>
@@ -342,7 +370,7 @@ export default function Salidas() {
               />
 
               <Input
-                label="Cantidad"
+                label="Cantidad (unidades)"
                 type="number"
                 required
                 min={1}
@@ -352,21 +380,21 @@ export default function Salidas() {
                 }
               />
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => {
                     setShowModal(false);
                     setFormError("");
                   }}
-                  className="flex-1 px-4 py-3 border-2 border-slate-300 rounded-xl hover:bg-slate-50 transition-all duration-200 font-semibold"
+                  className="flex-1 px-4 py-3 text-sm border-2 border-slate-300 rounded-xl hover:bg-slate-50 active:bg-slate-100 transition-all duration-200 font-semibold"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:from-red-700 hover:to-orange-700 disabled:opacity-50 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
+                  className="flex-1 px-4 py-3 text-sm bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl hover:from-red-700 hover:to-orange-700 disabled:opacity-50 active:scale-95 transition-all duration-200 font-semibold shadow-lg"
                 >
                   {isSubmitting ? "Guardando..." : "Registrar"}
                 </button>
@@ -376,13 +404,5 @@ export default function Salidas() {
         )}
       </main>
     </div>
-  );
-}
-
-function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="px-6 py-4 text-left text-sm font-bold text-slate-900">
-      {children}
-    </th>
   );
 }

@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Fish, LogOut, Package, TrendingUp, TrendingDown } from "lucide-react";
+import { LogOut, Package, TrendingUp, TrendingDown } from "lucide-react";
+import image from "../assests/images.jpeg"
 
 export default function PrivateLayout() {
   const { user, logout } = useAuth();
@@ -18,13 +19,16 @@ export default function PrivateLayout() {
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50">
       {/* Sidebar */}
-      <aside className="w-72 bg-white/90 backdrop-blur-sm border-r border-slate-200 shadow-xl">
-        <div className="p-6 flex items-center gap-3 border-b border-slate-200">
-          <div className="bg-blue-600 p-2 rounded-xl">
-            <Fish className="w-6 h-6 text-white" />
-          </div>
+      <aside className="w-72 bg-transparent/90 backdrop-blur-sm border-r border-slate-200 shadow-xl">
+        <div className="p-6 flex items-center gap-10 border-b border-slate-200">
+          {/* Logo de la Pescadería */}
+          <img
+            src={image}
+            alt="Pescadería San José"
+            className="w-12 h-12 rounded-xl object-cover"
+          />
           <div>
-            <p className="font-bold text-slate-900 leading-tight">Pescadería</p>
+            <p className="font-bold text-slate-900 leading-tight">San José</p>
             <p className="text-xs text-slate-500">{user?.email}</p>
           </div>
         </div>
@@ -51,7 +55,6 @@ export default function PrivateLayout() {
               <h1 className="text-xl font-bold">Panel</h1>
               <p className="text-sm text-cyan-100">Gestioná tu inventario</p>
             </div>
-
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl border border-white/20 transition"
@@ -70,4 +73,3 @@ export default function PrivateLayout() {
     </div>
   );
 }
-

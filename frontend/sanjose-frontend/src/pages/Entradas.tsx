@@ -1,6 +1,4 @@
 import { useState, useMemo } from "react";
-import { useProductos } from "../hooks/useProductos";
-import { useMovimientos } from "../hooks/useMovimientos";
 import {
   Plus,
   Search,
@@ -11,7 +9,50 @@ import {
   Package,
   X,
   Edit2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
+
+// Simulación de datos para la demo
+const productosDemo = [
+  { id: 1, codigo: "P001", descripcion: "Merluza Fresca", tipo_cantidad: "kg" },
+  { id: 2, codigo: "P002", descripcion: "Salmon Rosado", tipo_cantidad: "kg" },
+  { id: 3, codigo: "P003", descripcion: "Langostinos", tipo_cantidad: "kg" },
+  { id: 4, codigo: "P004", descripcion: "Camarones", tipo_cantidad: "kg" },
+];
+
+const movimientosDemo = [
+  {
+    id: 1,
+    tipo: "ENTRADA",
+    numero_factura: 1001,
+    fecha: "2025-01-15",
+    descripcion: "Compra mercado central",
+    cantidad: 50,
+    estado: true,
+    producto: productosDemo[0],
+  },
+  {
+    id: 2,
+    tipo: "ENTRADA",
+    numero_factura: 1001,
+    fecha: "2025-01-15",
+    descripcion: "Compra mercado central",
+    cantidad: 30,
+    estado: true,
+    producto: productosDemo[1],
+  },
+  {
+    id: 3,
+    tipo: "ENTRADA",
+    numero_factura: 1002,
+    fecha: "2025-01-16",
+    descripcion: "Compra puerto",
+    cantidad: 25,
+    estado: true,
+    producto: productosDemo[2],
+  },
+];
 
 interface ProductoEntrada {
   producto_id: number;
@@ -26,18 +67,8 @@ interface FormData {
 }
 
 export default function Entradas() {
-  const { productos, fetchProductos } = useProductos();
-  const {
-    movimientos,
-    isLoading,
-    error,
-    createEntrada,
-    anularMovimiento,
-    editarCantidad,
-  } = useMovimientos({
-    refreshProductos: fetchProductos,
-  });
-
+  const [movimientos] = useState(movimientosDemo);
+  const [productos] = useState(productosDemo);
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingMovimiento, setEditingMovimiento] = useState<any>(null);
@@ -46,6 +77,7 @@ export default function Entradas() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [formError, setFormError] = useState("");
+  const [expandedFacturas, setExpandedFacturas] = useState<Set<string>>(new Set());
 
   const initialForm: FormData = {
     numero_factura: 0,
@@ -86,14 +118,12 @@ export default function Entradas() {
     setIsSubmitting(true);
 
     try {
-      // Validar que hay al menos un producto
       if (formData.productos.length === 0) {
         setFormError("Debes agregar al menos un producto");
         setIsSubmitting(false);
         return;
       }
 
-      // Validar que todos los productos tienen datos válidos
       for (const prod of formData.productos) {
         if (!prod.producto_id || prod.producto_id === 0) {
           setFormError("Todos los productos deben estar seleccionados");
@@ -107,16 +137,8 @@ export default function Entradas() {
         }
       }
 
-      // Crear una entrada por cada producto en la factura
-      for (const prod of formData.productos) {
-        await createEntrada({
-          numero_factura: formData.numero_factura,
-          fecha: formData.fecha,
-          producto_id: prod.producto_id,
-          descripcion: formData.descripcion,
-          cantidad: prod.cantidad,
-        });
-      }
+      // Simular guardado
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       setFormData(initialForm);
       setShowModal(false);
@@ -129,31 +151,10 @@ export default function Entradas() {
     }
   };
 
-  const handleAnularFactura = async (numeroFactura: number, fecha: string) => {
-    if (!confirm("¿Anular toda la factura? Esto anulará todos los productos asociados.")) {
-      return;
-    }
-
-    try {
-      // Encontrar todos los movimientos de esta factura
-      const movimientosFactura = movimientos.filter(
-        (m) =>
-          m.tipo === "ENTRADA" &&
-          m.numero_factura === numeroFactura &&
-          m.fecha === fecha &&
-          m.estado === true
-      );
-
-      // Anular cada uno
-      for (const mov of movimientosFactura) {
-        await anularMovimiento(mov.id);
-      }
-
-      setSuccessMessage("Factura anulada exitosamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (err: any) {
-      setFormError(err.message || "Error al anular factura");
-    }
+  const handleAnularFactura = async (numeroFactura: number) => {
+    if (!confirm("¿Anular toda la factura?")) return;
+    setSuccessMessage("Factura anulada exitosamente");
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   const handleEditarProducto = (mov: any) => {
@@ -163,16 +164,9 @@ export default function Entradas() {
   };
 
   const handleGuardarEdicion = async () => {
-    if (!editingMovimiento) return;
-
-    try {
-      await editarCantidad(editingMovimiento.id, { cantidad: editCantidad });
-      setShowEditModal(false);
-      setSuccessMessage("Cantidad actualizada exitosamente");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (err: any) {
-      setFormError(err.message || "Error al actualizar cantidad");
-    }
+    setShowEditModal(false);
+    setSuccessMessage("Cantidad actualizada exitosamente");
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   const agregarProducto = () => {
@@ -187,9 +181,18 @@ export default function Entradas() {
     setFormData({ ...formData, productos: nuevos });
   };
 
+  const toggleFactura = (key: string) => {
+    const newExpanded = new Set(expandedFacturas);
+    if (newExpanded.has(key)) {
+      newExpanded.delete(key);
+    } else {
+      newExpanded.add(key);
+    }
+    setExpandedFacturas(newExpanded);
+  };
+
   const totalKg = facturasAgrupadas.reduce(
-    (sum, f) =>
-      sum + f.productos.reduce((s: number, p: any) => s + Math.abs(p.cantidad), 0),
+    (sum, f) => sum + f.productos.reduce((s: number, p: any) => s + Math.abs(p.cantidad), 0),
     0
   );
 
@@ -207,243 +210,334 @@ export default function Entradas() {
   }, [facturasAgrupadas, searchTerm]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-3 sm:p-6 lg:p-8">
       <main className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-8">
+        {/* Header Responsive */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 sm:mb-8">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 rounded-xl shadow-lg">
-                <TrendingUp className="w-7 h-7 text-white" />
+            <div className="flex items-center gap-2 sm:gap-3 mb-2">
+              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-lg">
+                <TrendingUp className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
-              <h3 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                Entradas de Mercadería
+              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                Entradas
               </h3>
             </div>
-            <p className="text-slate-600 ml-16">Registra facturas con múltiples productos</p>
+            <p className="text-slate-600 text-sm sm:text-base ml-9 sm:ml-16">
+              Registra facturas con múltiples productos
+            </p>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 font-medium"
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 font-medium text-sm sm:text-base w-full sm:w-auto"
           >
             <Plus size={20} />
             Nueva Factura
           </button>
         </div>
 
-        {/* Success Message */}
+        {/* Success/Error Messages */}
         {successMessage && (
-          <div className="bg-green-50 border-l-4 border-green-500 rounded-xl p-4 mb-6 flex gap-3 items-center shadow-sm">
-            <div className="bg-green-100 p-2 rounded-lg">
-              <CheckCircle className="text-green-600" size={20} />
+          <div className="bg-green-50 border-l-4 border-green-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex gap-2 sm:gap-3 items-center shadow-sm">
+            <div className="bg-green-100 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
+              <CheckCircle className="text-green-600 w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <p className="text-green-700 font-medium">{successMessage}</p>
+            <p className="text-green-700 font-medium text-sm sm:text-base">{successMessage}</p>
           </div>
         )}
 
-        {/* Error Message */}
-        {(error || formError) && (
-          <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-4 mb-6 flex gap-3 items-center shadow-sm">
-            <div className="bg-red-100 p-2 rounded-lg">
-              <AlertCircle className="text-red-600" size={20} />
+        {formError && (
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex gap-2 sm:gap-3 items-center shadow-sm">
+            <div className="bg-red-100 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
+              <AlertCircle className="text-red-600 w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <p className="text-red-700 font-medium">{error || formError}</p>
+            <p className="text-red-700 font-medium text-sm sm:text-base">{formError}</p>
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-green-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-green-100 p-3 rounded-xl">
-                <Calendar className="w-6 h-6 text-green-600" />
+        {/* Stats Responsive */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-green-100 p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="bg-green-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
               <div className="text-right">
-                <p className="text-slate-600 text-sm font-medium mb-1">Facturas</p>
-                <p className="text-4xl font-bold text-green-600">{facturasAgrupadas.length}</p>
+                <p className="text-slate-600 text-xs sm:text-sm font-medium mb-1">Facturas</p>
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-600">
+                  {facturasAgrupadas.length}
+                </p>
               </div>
             </div>
           </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-emerald-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-emerald-100 p-3 rounded-xl">
-                <Package className="w-6 h-6 text-emerald-600" />
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-emerald-100 p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="bg-emerald-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
               </div>
               <div className="text-right">
-                <p className="text-slate-600 text-sm font-medium mb-1">Total Productos</p>
-                <p className="text-4xl font-bold text-emerald-600">
+                <p className="text-slate-600 text-xs sm:text-sm font-medium mb-1">Productos</p>
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-emerald-600">
                   {facturasAgrupadas.reduce((s, f) => s + f.productos.length, 0)}
                 </p>
               </div>
             </div>
           </div>
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-teal-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-teal-100 p-3 rounded-xl">
-                <TrendingUp className="w-6 h-6 text-teal-600" />
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-teal-100 p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center justify-between">
+              <div className="bg-teal-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-teal-600" />
               </div>
               <div className="text-right">
-                <p className="text-slate-600 text-sm font-medium mb-1">Cantidad Total</p>
-                <p className="text-4xl font-bold text-teal-600">
+                <p className="text-slate-600 text-xs sm:text-sm font-medium mb-1">Total</p>
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-teal-600">
                   {totalKg}
-                  <span className="text-xl ml-1 text-slate-500">items</span>
+                  <span className="text-lg sm:text-xl ml-1 text-slate-500">items</span>
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Search */}
-        <div className="mb-6 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+        {/* Search Responsive */}
+        <div className="mb-4 sm:mb-6 relative">
+          <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 sm:w-5 sm:h-5" />
           <input
             type="text"
-            placeholder="Buscar por número de factura o producto..."
+            placeholder="Buscar factura o producto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none bg-white/80"
+            className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 border-2 border-slate-200 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none bg-white/80 text-sm sm:text-base"
           />
         </div>
 
-        {/* Facturas */}
-        {isLoading ? (
-          <div className="bg-white/80 rounded-2xl shadow-lg p-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-            <p className="mt-4 text-slate-600">Cargando facturas...</p>
-          </div>
-        ) : filteredFacturas.length === 0 ? (
-          <div className="bg-white/80 rounded-2xl shadow-lg p-12 text-center">
-            <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 text-lg">No hay facturas registradas</p>
+        {/* Facturas - Mobile: Cards, Desktop: Tablas */}
+        {filteredFacturas.length === 0 ? (
+          <div className="bg-white/80 rounded-xl sm:rounded-2xl shadow-lg p-8 sm:p-12 text-center">
+            <Package className="w-12 h-12 sm:w-16 sm:h-16 text-slate-300 mx-auto mb-4" />
+            <p className="text-slate-500 text-base sm:text-lg">No hay facturas registradas</p>
             <button
               onClick={() => setShowModal(true)}
-              className="mt-4 text-green-600 hover:text-green-700 font-semibold"
+              className="mt-4 text-green-600 hover:text-green-700 font-semibold text-sm sm:text-base"
             >
               Registrar primera factura
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredFacturas.map((factura) => (
-              <div
-                key={`${factura.numero_factura}-${factura.fecha}`}
-                className={`bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border overflow-hidden ${factura.estado ? "border-green-200" : "border-red-200 opacity-60"
-                  }`}
-              >
-                {/* Header Factura */}
+          <div className="space-y-3 sm:space-y-4">
+            {filteredFacturas.map((factura) => {
+              const key = `${factura.numero_factura}-${factura.fecha}`;
+              const isExpanded = expandedFacturas.has(key);
+
+              return (
                 <div
-                  className={`p-6 ${factura.estado
+                  key={key}
+                  className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${factura.estado ? "border-green-200" : "border-red-200 opacity-60"
+                    }`}
+                >
+                  {/* Header Factura - Responsive */}
+                  <div
+                    className={`p-3 sm:p-4 lg:p-6 ${factura.estado
                       ? "bg-gradient-to-r from-green-50 to-emerald-50"
                       : "bg-gray-100"
-                    } border-b flex justify-between items-center`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="bg-blue-100 px-4 py-2 rounded-xl">
-                      <span className="text-blue-700 font-bold text-lg">
-                        Factura #{factura.numero_factura}
-                      </span>
+                      } border-b`}
+                  >
+                    {/* Mobile: Stack vertical con toggle */}
+                    <div className="flex flex-col gap-3 sm:hidden">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="bg-blue-100 px-3 py-1.5 rounded-lg">
+                            <span className="text-blue-700 font-bold text-sm">
+                              #{factura.numero_factura}
+                            </span>
+                          </div>
+                          <div
+                            className={`px-2 py-1 rounded-lg text-xs font-bold ${factura.estado
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                              }`}
+                          >
+                            {factura.estado ? "✓" : "✗"}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => toggleFactura(key)}
+                          className="p-2 hover:bg-white/50 rounded-lg transition"
+                        >
+                          {isExpanded ? (
+                            <ChevronUp className="w-5 h-5 text-slate-600" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-slate-600" />
+                          )}
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-600 text-sm">
+                        <Calendar className="w-4 h-4" />
+                        {new Date(factura.fecha).toLocaleDateString("es-AR")}
+                      </div>
+                      <div className="text-slate-600 text-sm">
+                        {factura.productos.length} producto{factura.productos.length !== 1 ? "s" : ""}
+                      </div>
                     </div>
-                    <div className="text-slate-600 flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      {new Date(factura.fecha).toLocaleDateString("es-AR")}
-                    </div>
-                    <div
-                      className={`px-3 py-1 rounded-lg text-xs font-bold ${factura.estado
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                        }`}
-                    >
-                      {factura.estado ? "✓ Activa" : "✗ Anulada"}
+
+                    {/* Desktop: Horizontal */}
+                    <div className="hidden sm:flex justify-between items-center">
+                      <div className="flex items-center gap-3 lg:gap-4">
+                        <div className="bg-blue-100 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg lg:rounded-xl">
+                          <span className="text-blue-700 font-bold text-base lg:text-lg">
+                            Factura #{factura.numero_factura}
+                          </span>
+                        </div>
+                        <div className="text-slate-600 flex items-center gap-2 text-sm lg:text-base">
+                          <Calendar className="w-4 h-4" />
+                          {new Date(factura.fecha).toLocaleDateString("es-AR")}
+                        </div>
+                        <div
+                          className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${factura.estado
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                            }`}
+                        >
+                          {factura.estado ? "✓ Activa" : "✗ Anulada"}
+                        </div>
+                      </div>
+                      {factura.estado && (
+                        <button
+                          onClick={() => handleAnularFactura(factura.numero_factura)}
+                          className="flex items-center gap-2 px-3 lg:px-4 py-1.5 lg:py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg lg:rounded-xl transition font-medium text-sm lg:text-base"
+                        >
+                          <X className="w-4 h-4 lg:w-5 lg:h-5" />
+                          <span className="hidden lg:inline">Anular</span>
+                        </button>
+                      )}
                     </div>
                   </div>
-                  {factura.estado && (
-                    <button
-                      onClick={() =>
-                        handleAnularFactura(factura.numero_factura, factura.fecha)
-                      }
-                      className="flex items-center gap-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl transition font-medium"
-                    >
-                      <X className="w-5 h-5" />
-                      Anular Factura
-                    </button>
+
+                  {/* Productos - Mobile: Cards, Desktop: Tabla */}
+                  {(isExpanded || window.innerWidth >= 640) && (
+                    <>
+                      {/* Mobile: Cards */}
+                      <div className="sm:hidden divide-y">
+                        {factura.productos.map((mov: any) => (
+                          <div key={mov.id} className="p-3 hover:bg-green-50/30">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <p className="font-mono text-xs text-slate-500 mb-1">
+                                  {mov.producto?.codigo}
+                                </p>
+                                <p className="font-medium text-sm">
+                                  {mov.producto?.descripcion}
+                                </p>
+                              </div>
+                              {factura.estado && (
+                                <button
+                                  onClick={() => handleEditarProducto(mov)}
+                                  className="p-1.5 hover:bg-blue-100 rounded-lg transition ml-2"
+                                >
+                                  <Edit2 className="w-4 h-4 text-blue-600" />
+                                </button>
+                              )}
+                            </div>
+                            <div className="inline-block">
+                              <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                                +{Math.abs(mov.cantidad)} {mov.producto?.tipo_cantidad || "u"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Desktop: Tabla */}
+                      <div className="hidden sm:block overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-slate-50">
+                            <tr>
+                              <th className="px-4 lg:px-6 py-2 lg:py-3 text-left text-xs font-bold text-slate-700">
+                                Código
+                              </th>
+                              <th className="px-4 lg:px-6 py-2 lg:py-3 text-left text-xs font-bold text-slate-700">
+                                Descripción
+                              </th>
+                              <th className="px-4 lg:px-6 py-2 lg:py-3 text-left text-xs font-bold text-slate-700">
+                                Cantidad
+                              </th>
+                              {factura.estado && (
+                                <th className="px-4 lg:px-6 py-2 lg:py-3 text-right text-xs font-bold text-slate-700">
+                                  Acciones
+                                </th>
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {factura.productos.map((mov: any) => (
+                              <tr key={mov.id} className="border-b hover:bg-green-50/30">
+                                <td className="px-4 lg:px-6 py-3 lg:py-4 font-mono text-sm">
+                                  {mov.producto?.codigo}
+                                </td>
+                                <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm">
+                                  {mov.producto?.descripcion}
+                                </td>
+                                <td className="px-4 lg:px-6 py-3 lg:py-4">
+                                  <span className="px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg lg:rounded-xl text-sm font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                                    +{Math.abs(mov.cantidad)} {mov.producto?.tipo_cantidad || "u"}
+                                  </span>
+                                </td>
+                                {factura.estado && (
+                                  <td className="px-4 lg:px-6 py-3 lg:py-4 text-right">
+                                    <button
+                                      onClick={() => handleEditarProducto(mov)}
+                                      className="p-2 hover:bg-blue-100 rounded-lg lg:rounded-xl transition"
+                                      title="Editar cantidad"
+                                    >
+                                      <Edit2 className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" />
+                                    </button>
+                                  </td>
+                                )}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Botón anular en mobile */}
+                      {factura.estado && (
+                        <div className="sm:hidden p-3 border-t">
+                          <button
+                            onClick={() => handleAnularFactura(factura.numero_factura)}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition font-medium text-sm"
+                          >
+                            <X className="w-5 h-5" />
+                            Anular Factura
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
-
-                {/* Productos */}
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-slate-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-slate-700">
-                          Código
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-slate-700">
-                          Descripción
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-bold text-slate-700">
-                          Cantidad
-                        </th>
-                        {factura.estado && (
-                          <th className="px-6 py-3 text-right text-xs font-bold text-slate-700">
-                            Acciones
-                          </th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {factura.productos.map((mov: any) => (
-                        <tr key={mov.id} className="border-b hover:bg-green-50/30">
-                          <td className="px-6 py-4 font-mono text-sm">
-                            {mov.producto?.codigo}
-                          </td>
-                          <td className="px-6 py-4 text-sm">
-                            {mov.producto?.descripcion || mov.descripcion}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="px-4 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white">
-                              +{Math.abs(mov.cantidad)} {mov.producto?.tipo_cantidad || "u"}
-                            </span>
-                          </td>
-                          {factura.estado && (
-                            <td className="px-6 py-4 text-right">
-                              <button
-                                onClick={() => handleEditarProducto(mov)}
-                                className="p-2 hover:bg-blue-100 rounded-xl transition"
-                                title="Editar cantidad"
-                              >
-                                <Edit2 className="w-5 h-5 text-blue-600" />
-                              </button>
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* Modal Nueva Factura */}
+        {/* Modal Nueva Factura - Responsive */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b bg-gradient-to-r from-green-50 to-emerald-50 sticky top-0 z-10">
-                <h3 className="text-2xl font-bold text-slate-900">
-                  Nueva Factura de Entrada
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-green-50 to-emerald-50 sticky top-0 z-10">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                  Nueva Factura
                 </h3>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 {formError && (
-                  <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-3 flex gap-2">
-                    <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+                  <div className="bg-red-50 border-l-4 border-red-500 rounded-lg sm:rounded-xl p-3 flex gap-2">
+                    <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5 w-5 h-5" />
                     <p className="text-red-700 text-sm font-medium">{formError}</p>
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">
                       Número de Factura
@@ -458,7 +552,7 @@ export default function Entradas() {
                           numero_factura: parseInt(e.target.value) || 0,
                         })
                       }
-                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none text-sm sm:text-base"
                       placeholder="1001"
                     />
                   </div>
@@ -473,7 +567,7 @@ export default function Entradas() {
                       onChange={(e) =>
                         setFormData({ ...formData, fecha: e.target.value })
                       }
-                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none text-sm sm:text-base"
                     />
                   </div>
                 </div>
@@ -489,8 +583,8 @@ export default function Entradas() {
                     onChange={(e) =>
                       setFormData({ ...formData, descripcion: e.target.value })
                     }
-                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none"
-                    placeholder="Compra pescado fresco del puerto"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none text-sm sm:text-base"
+                    placeholder="Compra pescado fresco"
                   />
                 </div>
 
@@ -502,7 +596,7 @@ export default function Entradas() {
                       onClick={agregarProducto}
                       className="text-green-600 hover:text-green-700 font-semibold text-sm flex items-center gap-1"
                     >
-                      <Plus size={18} /> Agregar producto
+                      <Plus size={18} /> Agregar
                     </button>
                   </div>
 
@@ -510,9 +604,9 @@ export default function Entradas() {
                     {formData.productos.map((prod, index) => (
                       <div
                         key={index}
-                        className="flex gap-3 items-start bg-slate-50 p-4 rounded-xl"
+                        className="flex flex-col sm:flex-row gap-3 items-start bg-slate-50 p-3 sm:p-4 rounded-lg sm:rounded-xl"
                       >
-                        <div className="flex-1">
+                        <div className="flex-1 w-full">
                           <select
                             required
                             value={prod.producto_id}
@@ -521,7 +615,7 @@ export default function Entradas() {
                               nuevos[index].producto_id = parseInt(e.target.value);
                               setFormData({ ...formData, productos: nuevos });
                             }}
-                            className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
+                            className="w-full px-3 sm:px-4 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none text-sm sm:text-base"
                           >
                             <option value={0}>Seleccionar producto</option>
                             {productos.map((p) => (
@@ -531,7 +625,7 @@ export default function Entradas() {
                             ))}
                           </select>
                         </div>
-                        <div className="w-32">
+                        <div className="flex gap-2 w-full sm:w-auto">
                           <input
                             type="number"
                             required
@@ -542,41 +636,41 @@ export default function Entradas() {
                               nuevos[index].cantidad = parseInt(e.target.value) || 0;
                               setFormData({ ...formData, productos: nuevos });
                             }}
-                            className="w-full px-4 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none"
-                            placeholder="unidades/cajas/kg"
+                            className="flex-1 sm:w-32 px-3 sm:px-4 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none text-sm sm:text-base"
+                            placeholder="Cantidad"
                           />
+                          {formData.productos.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => eliminarProducto(index)}
+                              className="p-2 hover:bg-red-100 rounded-lg transition flex-shrink-0"
+                            >
+                              <X className="w-5 h-5 text-red-600" />
+                            </button>
+                          )}
                         </div>
-                        {formData.productos.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => eliminarProducto(index)}
-                            className="p-2 hover:bg-red-100 rounded-lg transition"
-                          >
-                            <X className="w-5 h-5 text-red-600" />
-                          </button>
-                        )}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-4 border-t">
+                <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t">
                   <button
                     type="button"
                     onClick={() => {
                       setShowModal(false);
                       setFormError("");
                     }}
-                    className="flex-1 px-4 py-3 border-2 border-slate-300 rounded-xl hover:bg-slate-50 font-semibold"
+                    className="flex-1 px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl hover:bg-slate-50 font-semibold text-sm sm:text-base"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 font-semibold shadow-lg"
+                    className="flex-1 px-4 py-2.5 sm:py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg sm:rounded-xl hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 font-semibold shadow-lg text-sm sm:text-base"
                   >
-                    {isSubmitting ? "Guardando..." : "Registrar Factura"}
+                    {isSubmitting ? "Guardando..." : "Registrar"}
                   </button>
                 </div>
               </form>
@@ -584,17 +678,19 @@ export default function Entradas() {
           </div>
         )}
 
-        {/* Modal Editar */}
+        {/* Modal Editar - Responsive */}
         {showEditModal && editingMovimiento && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-              <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-                <h3 className="text-xl font-bold text-slate-900">Editar Cantidad</h3>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full">
+              <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+                  Editar Cantidad
+                </h3>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <div>
                   <p className="text-sm text-slate-600 mb-1">Producto</p>
-                  <p className="font-semibold">
+                  <p className="font-semibold text-sm sm:text-base">
                     {editingMovimiento.producto?.descripcion}
                   </p>
                 </div>
@@ -607,19 +703,19 @@ export default function Entradas() {
                     min={1}
                     value={editCantidad}
                     onChange={(e) => setEditCantidad(parseInt(e.target.value) || 0)}
-                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm sm:text-base"
                   />
                 </div>
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
                   <button
                     onClick={() => setShowEditModal(false)}
-                    className="flex-1 px-4 py-3 border-2 border-slate-300 rounded-xl hover:bg-slate-50 font-semibold"
+                    className="flex-1 px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl hover:bg-slate-50 font-semibold text-sm sm:text-base"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleGuardarEdicion}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg"
+                    className="flex-1 px-4 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 font-semibold shadow-lg text-sm sm:text-base"
                   >
                     Guardar
                   </button>

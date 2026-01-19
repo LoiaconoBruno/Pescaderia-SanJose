@@ -1,18 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { Fish, Eye, EyeOff, Waves, ArrowRight } from "lucide-react";
 
 export default function Login() {
-  const navigate = useNavigate();
-  const { login, isLoading, error } = useAuth();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError("");
 
@@ -21,105 +17,143 @@ export default function Login() {
       return;
     }
 
-    try {
-      await login(email, password);
-      navigate("/dashboard", { replace: true });
-    } catch (err) {
-      setLocalError(err instanceof Error ? err.message : "Error al iniciar sesión");
-    }
+    setIsLoading(true);
+    // Simular login
+    setTimeout(() => {
+      setIsLoading(false);
+      alert("Login exitoso! (demo)");
+    }, 1000);
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 px-4 py-12 relative overflow-hidden">
-      {/* Decoración */}
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 px-3 sm:px-4 py-6 sm:py-12 relative overflow-hidden">
+      {/* Decoración - Adaptada para mobile */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <Waves className="absolute -top-10 -left-10 w-64 h-64 text-cyan-200/30 -rotate-12" />
-        <Fish className="absolute top-20 right-20 w-32 h-32 text-blue-200/20 rotate-45" />
-        <Waves className="absolute -bottom-20 right-10 w-96 h-96 text-teal-200/20" />
-        <Fish className="absolute bottom-40 left-10 w-24 h-24 text-cyan-300/30 -rotate-12" />
+        <Waves className="absolute -top-10 -left-10 w-40 h-40 sm:w-64 sm:h-64 text-cyan-200/30 -rotate-12" />
+        <Fish className="absolute top-10 sm:top-20 right-10 sm:right-20 w-20 h-20 sm:w-32 sm:h-32 text-blue-200/20 rotate-45" />
+        <Waves className="absolute -bottom-20 right-5 sm:right-10 w-60 h-60 sm:w-96 sm:h-96 text-teal-200/20" />
+        <Fish className="absolute bottom-20 sm:bottom-40 left-5 sm:left-10 w-16 h-16 sm:w-24 sm:h-24 text-cyan-300/30 -rotate-12" />
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-          {/* Header */}
-          <div className="bg-gradient-to-br from-cyan-600 via-blue-600 to-teal-600 px-8 py-10 text-center relative">
-            <div className="flex justify-center mb-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-xl">
-                <Fish className="h-10 w-10 text-white" />
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/20">
+          {/* Header - Responsive */}
+          <div className="bg-gradient-to-br from-cyan-600 via-blue-600 to-teal-600 px-6 sm:px-8 py-8 sm:py-10 text-center relative">
+            <div className="flex justify-center mb-3 sm:mb-4">
+              <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-xl sm:rounded-2xl bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-xl">
+                <Fish className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-white">Pescadería</h1>
-            <p className="text-cyan-100 font-medium">Sistema de Gestión</p>
-            <div className="h-1 w-20 bg-white/40 rounded-full mx-auto mt-3" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Pescadería</h1>
+            <p className="text-cyan-100 font-medium text-sm sm:text-base">
+              Sistema de Gestión
+            </p>
+            <div className="h-1 w-16 sm:w-20 bg-white/40 rounded-full mx-auto mt-2 sm:mt-3" />
           </div>
 
-          <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          <div className="p-5 sm:p-8 space-y-5 sm:space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-slate-900">Bienvenido</h2>
-              <p className="text-slate-600">Ingresa tus credenciales</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Bienvenido</h2>
+              <p className="text-slate-600 text-sm sm:text-base">Ingresa tus credenciales</p>
             </div>
 
-            {(localError || error) && (
-              <div className="bg-red-50 border-l-4 border-red-500 rounded-xl p-4 flex gap-3 animate-shake">
-                <span className="text-red-600">⚠️</span>
-                <p className="text-red-700 text-sm font-medium">{localError || error}</p>
+            {localError && (
+              <div className="bg-red-50 border-l-4 border-red-500 rounded-lg sm:rounded-xl p-3 sm:p-4 flex gap-2 sm:gap-3 animate-shake">
+                <span className="text-red-600 text-lg sm:text-xl flex-shrink-0">⚠️</span>
+                <p className="text-red-700 text-xs sm:text-sm font-medium">{localError}</p>
               </div>
             )}
 
-            <div className="space-y-5">
+            <div className="space-y-4 sm:space-y-5">
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Email</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">
+                  Email
+                </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none"
+                  placeholder="correo@ejemplo.com"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Contraseña</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">
+                  Contraseña
+                </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isLoading}
-                    className="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none"
+                    placeholder="••••••••"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"
+                    className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                    disabled={isLoading}
                   >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showPassword ? (
+                      <EyeOff size={18} className="sm:w-5 sm:h-5" />
+                    ) : (
+                      <Eye size={18} className="sm:w-5 sm:h-5" />
+                    )}
                   </button>
                 </div>
               </div>
 
               <button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 shadow-lg hover:scale-[1.02]"
+                className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-3 sm:py-3.5 rounded-lg sm:rounded-xl flex justify-center items-center gap-2 shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all text-sm sm:text-base"
               >
-                {isLoading ? "Iniciando sesión..." : <>Iniciar sesión <ArrowRight size={20} /></>}
+                {isLoading ? (
+                  <>
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Iniciando sesión...</span>
+                  </>
+                ) : (
+                  <>
+                    Iniciar sesión
+                    <ArrowRight size={18} className="sm:w-5 sm:h-5" />
+                  </>
+                )}
               </button>
             </div>
 
-            <div className="text-center text-sm text-slate-600">
-              ¿No tienes cuenta?{" "}
-              <Link to="/signup" className="text-cyan-600 font-bold hover:underline">
-                Crear cuenta
-              </Link>
+            {/* Link de recuperación - Opcional */}
+            <div className="text-center">
+              <button
+                type="button"
+                className="text-cyan-600 hover:text-cyan-700 text-xs sm:text-sm font-semibold transition-colors"
+                onClick={() => alert("Funcionalidad en desarrollo")}
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
             </div>
-          </form>
+          </div>
         </div>
 
-        <p className="text-center text-slate-600 text-sm mt-6">
+        <p className="text-center text-slate-600 text-xs sm:text-sm mt-4 sm:mt-6 px-4">
           Sistema de gestión para pescaderías
         </p>
       </div>
+
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-10px); }
+          75% { transform: translateX(10px); }
+        }
+        .animate-shake {
+          animation: shake 0.5s ease-in-out;
+        }
+      `}</style>
     </main>
   );
 }

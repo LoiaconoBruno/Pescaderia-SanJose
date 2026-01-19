@@ -3,7 +3,6 @@ import PrivateRoute from "./PrivateRoute";
 import PrivateLayout from "../layouts/PrivateLayout";
 
 import Login from "../pages/Login";
-import SignUp from "../pages/Signup";
 import Dashboard from "../pages/Dashboard";
 import Productos from "../pages/Productos";
 import Entradas from "../pages/Entradas";
@@ -14,7 +13,6 @@ export default function AppRoutes() {
     <Routes>
       {/* Públicas */}
       <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<SignUp />} />
 
       {/* Privadas */}
       <Route element={<PrivateRoute />}>
