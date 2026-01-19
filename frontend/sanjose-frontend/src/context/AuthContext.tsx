@@ -7,12 +7,13 @@ import {
   type ReactNode,
 } from "react";
 
-import api from "../lib/axios"; // ✅ usa tu instancia
+import api from "../lib/axios";
 
 interface User {
   id: number;
   email: string;
-  name?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface AuthContextType {
@@ -31,7 +32,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // empieza true hasta restaurar sesión
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const logout = useCallback(() => {
@@ -63,13 +64,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(storedToken);
           setUser(JSON.parse(storedUser) as User);
 
-          // refresco del perfil (opcional)
+          // Refrescar perfil del backend
           try {
             const response = await api.get<User>("/auth/profile");
             setUser(response.data);
             localStorage.setItem("auth_user", JSON.stringify(response.data));
           } catch {
-            // si falla el profile, no rompemos la app
+            // Si falla, mantenemos el usuario del localStorage
+            console.warn("No se pudo verificar la sesión");
           }
         }
       } catch (err) {
@@ -102,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(newUser);
     } catch (err: any) {
       const msg =
-        err?.response?.data?.message ||
+        err?.response?.data?.error || // ✅ Tu backend usa "error" no "message"
         err?.message ||
         "Credenciales inválidas o error de conexión";
       setError(msg);
@@ -124,10 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(true);
         setError(null);
 
-        const response = await api.post("/auth/signup", {
+        const response = await api.post<{ token: string; user: User }>("/auth/signup", {
           email,
           password,
-          confirm_password: confirmPassword, // <--- así
+          confirm_password: confirmPassword, // ✅ Así lo espera tu backend
         });
 
         const { token: newToken, user: newUser } = response.data;
@@ -139,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(newUser);
       } catch (err: any) {
         const msg =
-          err?.response?.data?.message ||
+          err?.response?.data?.error || // ✅ Tu backend usa "error"
           err?.message ||
           "Error al crear la cuenta";
         setError(msg);

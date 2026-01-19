@@ -3,26 +3,26 @@ import api from "../lib/axios";
 
 export interface Producto {
   id: number;
-  codigo: string;
+  codigo: number; // ✅ ENTERO, no string
   descripcion: string;
   stock: number;
-  precio: number;
-  createdAt?: string;
-  updatedAt?: string;
+  tipo_cantidad?: "unidades" | "cajas" | "kg"; // ✅ Tipo de medida (opcional por compatibilidad)
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ProductoInput {
-  codigo: string;
+  codigo: number; // ✅ ENTERO
   descripcion: string;
   stock: number;
-  precio: number;
+  tipo_cantidad?: "unidades" | "cajas" | "kg"; // ✅ Tipo de medida (opcional)
 }
 
 export interface ProductoUpdateInput {
-  codigo?: string;
+  codigo?: number; // ✅ ENTERO
   descripcion?: string;
   stock?: number;
-  precio?: number;
+  tipo_cantidad?: "unidades" | "cajas" | "kg"; // ✅ Tipo de medida (opcional)
 }
 
 export function useProductos() {
@@ -34,11 +34,10 @@ export function useProductos() {
     try {
       setIsLoading(true);
       setError(null);
-
       const res = await api.get<Producto[]>("/productos");
       setProductos(res.data);
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Error al cargar productos";
+      const msg = err?.response?.data?.error || "Error al cargar productos";
       setError(msg);
       console.error("fetchProductos:", err);
     } finally {
@@ -50,18 +49,15 @@ export function useProductos() {
     async (data: ProductoInput) => {
       try {
         setError(null);
-
-        if (!data.codigo?.trim()) throw new Error("El código es obligatorio");
+        // Validaciones
+        if (!data.codigo) throw new Error("El código es obligatorio");
         if (!data.descripcion?.trim()) throw new Error("La descripción es obligatoria");
         if (data.stock < 0) throw new Error("El stock no puede ser negativo");
-        if (data.precio <= 0) throw new Error("El precio debe ser mayor a 0");
 
         await api.post("/productos", data);
-
-        // ✅ refresca lista completa (evita desincronización)
         await fetchProductos();
       } catch (err: any) {
-        const msg = err?.response?.data?.message || err?.message || "Error al crear producto";
+        const msg = err?.response?.data?.error || err?.message || "Error al crear producto";
         setError(msg);
         throw new Error(msg);
       }
@@ -73,17 +69,13 @@ export function useProductos() {
     async (id: number, data: ProductoUpdateInput) => {
       try {
         setError(null);
-
-        if (data.stock !== undefined && data.stock < 0) throw new Error("El stock no puede ser negativo");
-        if (data.precio !== undefined && data.precio <= 0) throw new Error("El precio debe ser mayor a 0");
-
+        if (data.stock !== undefined && data.stock < 0) {
+          throw new Error("El stock no puede ser negativo");
+        }
         await api.put(`/productos/${id}`, data);
-
-        // ✅ refresca lista completa
         await fetchProductos();
       } catch (err: any) {
-        const msg =
-          err?.response?.data?.message || err?.message || "Error al actualizar producto";
+        const msg = err?.response?.data?.error || err?.message || "Error al actualizar producto";
         setError(msg);
         throw new Error(msg);
       }
@@ -95,13 +87,10 @@ export function useProductos() {
     async (id: number) => {
       try {
         setError(null);
-
         await api.delete(`/productos/${id}`);
-
-        // ✅ refresca lista completa
         await fetchProductos();
       } catch (err: any) {
-        const msg = err?.response?.data?.message || "Error al eliminar producto";
+        const msg = err?.response?.data?.error || "Error al eliminar producto";
         setError(msg);
         throw new Error(msg);
       }
@@ -111,7 +100,12 @@ export function useProductos() {
 
   // Helpers
   const getProductoByCodigo = useCallback(
-    (codigo: string) => productos.find((p) => p.codigo === codigo),
+    (codigo: number) => productos.find((p) => p.codigo === codigo),
+    [productos]
+  );
+
+  const getProductoById = useCallback(
+    (id: number) => productos.find((p) => p.id === id),
     [productos]
   );
 
@@ -133,6 +127,7 @@ export function useProductos() {
     updateProducto,
     deleteProducto,
     getProductoByCodigo,
+    getProductoById,
     getProductosConStockBajo,
   };
 }

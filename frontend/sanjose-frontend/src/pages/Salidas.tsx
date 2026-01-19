@@ -21,7 +21,7 @@ import {
 
 type FormData = {
   fecha: string;
-  codigo: string;
+  producto_id: number;
   descripcion: string;
   cantidad: number;
 };
@@ -40,7 +40,7 @@ export default function Salidas() {
 
   const initialForm: FormData = {
     fecha: new Date().toISOString().split("T")[0],
-    codigo: "",
+    producto_id: 0,
     descripcion: "",
     cantidad: 0,
   };
@@ -58,13 +58,13 @@ export default function Salidas() {
     setShowModal(true);
   };
 
-  const handleProductoChange = (codigo: string) => {
-    const producto = productos.find((p) => p.codigo === codigo);
+  const handleProductoChange = (producto_id: number) => {
+    const producto = productos.find((p) => p.id === producto_id);
     if (!producto) return;
 
     setFormData((prev) => ({
       ...prev,
-      codigo: producto.codigo,
+      producto_id: producto.id,
       descripcion: producto.descripcion,
     }));
     setFormError("");
@@ -75,7 +75,7 @@ export default function Salidas() {
     setFormError("");
     setIsSubmitting(true);
 
-    const producto = productos.find((p) => p.codigo === formData.codigo);
+    const producto = productos.find((p) => p.id === formData.producto_id);
     if (!producto) {
       setFormError("Producto no encontrado");
       setIsSubmitting(false);
@@ -83,13 +83,18 @@ export default function Salidas() {
     }
 
     if (producto.stock < formData.cantidad) {
-      setFormError(`Stock insuficiente. Disponible: ${producto.stock} kg`);
+      setFormError(`Stock insuficiente. Disponible: ${producto.stock} ${producto.tipo_cantidad || "u"}`);
       setIsSubmitting(false);
       return;
     }
 
     try {
-      await createSalida(formData);
+      await createSalida({
+        fecha: formData.fecha,
+        producto_id: formData.producto_id,
+        descripcion: formData.descripcion,
+        cantidad: formData.cantidad,
+      });
 
       setFormData({
         ...initialForm,
@@ -109,17 +114,17 @@ export default function Salidas() {
   const salidasHoy = useMemo(() => {
     const hoy = new Date().toDateString();
     return movimientos.filter(
-      (m) => m.tipo === "SALIDA" && new Date(m.fecha).toDateString() === hoy
+      (m) => m.tipo === "SALIDA" && m.estado === true && new Date(m.fecha).toDateString() === hoy
     );
   }, [movimientos]);
 
   const totalSalidas = useMemo(() => {
-    return movimientos.filter((m) => m.tipo === "SALIDA").length;
+    return movimientos.filter((m) => m.tipo === "SALIDA" && m.estado === true).length;
   }, [movimientos]);
 
   const cantidadTotal = useMemo(() => {
     return movimientos
-      .filter((m) => m.tipo === "SALIDA")
+      .filter((m) => m.tipo === "SALIDA" && m.estado === true)
       .reduce((sum, m) => sum + Math.abs(m.cantidad), 0);
   }, [movimientos]);
 
@@ -128,7 +133,9 @@ export default function Salidas() {
     return movimientos.filter(
       (m) =>
         m.tipo === "SALIDA" &&
-        (m.codigo.toLowerCase().includes(term) ||
+        m.estado === true &&
+        (m.producto?.codigo.toString().toLowerCase().includes(term) ||
+          m.producto?.descripcion.toLowerCase().includes(term) ||
           m.descripcion.toLowerCase().includes(term))
     );
   }, [movimientos, searchTerm]);
@@ -203,7 +210,7 @@ export default function Salidas() {
             value={
               <span>
                 {cantidadTotal}
-                <span className="text-xl ml-1 text-slate-500">kg</span>
+                <span className="text-xl ml-1 text-slate-500">items</span>
               </span>
             }
             gradientClassName="bg-gradient-to-r from-rose-500 to-pink-500"
@@ -257,19 +264,19 @@ export default function Salidas() {
                         {new Date(m.fecha).toLocaleDateString("es-AR")}
                       </td>
                       <td className="px-6 py-4 text-slate-700 font-mono">
-                        {m.codigo}
+                        {m.producto?.codigo}
                       </td>
                       <td className="px-6 py-4 text-slate-700">
-                        {m.descripcion}
+                        {m.producto?.descripcion || m.descripcion}
                       </td>
                       <td className="px-6 py-4">
                         <span className="px-4 py-2 rounded-xl text-sm font-bold bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md">
-                          -{Math.abs(m.cantidad)} kg
+                          -{Math.abs(m.cantidad)} {m.producto?.tipo_cantidad || "u"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-100 text-green-700">
-                          Completada
+                          ✓ Completada
                         </span>
                       </td>
                     </tr>
@@ -314,23 +321,28 @@ export default function Salidas() {
                 </label>
                 <select
                   required
-                  value={formData.codigo}
-                  onChange={(e) => handleProductoChange(e.target.value)}
+                  value={formData.producto_id}
+                  onChange={(e) => handleProductoChange(parseInt(e.target.value))}
                   className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all"
                 >
-                  <option value="">Selecciona un producto</option>
+                  <option value={0}>Selecciona un producto</option>
                   {productos.map((p) => (
-                    <option key={p.id} value={p.codigo}>
-                      {p.codigo} - {p.descripcion} (Stock: {p.stock} kg)
+                    <option key={p.id} value={p.id}>
+                      {p.codigo} - {p.descripcion} (Stock: {p.stock} {p.tipo_cantidad || "u"})
                     </option>
                   ))}
                 </select>
               </div>
 
-              <Input label="Descripción" value={formData.descripcion} onChange={() => { }} readOnly />
+              <Input
+                label="Descripción"
+                value={formData.descripcion}
+                onChange={(v) => setFormData({ ...formData, descripcion: v })}
+                placeholder="Venta cliente, despacho, etc."
+              />
 
               <Input
-                label="Cantidad (kg)"
+                label="Cantidad"
                 type="number"
                 required
                 min={1}

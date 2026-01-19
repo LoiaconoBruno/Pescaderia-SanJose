@@ -11,16 +11,15 @@ import {
   Trash2,
   AlertCircle,
   Package,
-  DollarSign,
   Search,
   CheckCircle,
 } from "lucide-react";
 
 type FormData = {
-  codigo: string;
+  codigo: number;
   descripcion: string;
   stock: number;
-  precio: number;
+  tipo_cantidad: "unidades" | "cajas" | "kg";
 };
 
 export default function Productos() {
@@ -33,10 +32,10 @@ export default function Productos() {
   const [successMessage, setSuccessMessage] = useState("");
 
   const initialForm: FormData = {
-    codigo: "",
+    codigo: 0,
     descripcion: "",
     stock: 0,
-    precio: 0,
+    tipo_cantidad: "unidades",
   };
 
   const [formData, setFormData] = useState<FormData>(initialForm);
@@ -45,7 +44,12 @@ export default function Productos() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await createProducto(formData);
+      await createProducto({
+        codigo: formData.codigo,
+        descripcion: formData.descripcion,
+        stock: formData.stock,
+        tipo_cantidad: formData.tipo_cantidad,
+      });
       setFormData(initialForm);
       setShowModal(false);
       setSuccessMessage("¡Producto creado exitosamente!");
@@ -70,12 +74,12 @@ export default function Productos() {
 
   const filteredProductos = productos.filter(
     (p) =>
-      p.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.codigo.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const lowStock = productos.filter((p) => p.stock < 10).length;
-  const totalValue = productos.reduce((sum, p) => sum + p.stock * p.precio, 0);
+  const totalStock = productos.reduce((sum, p) => sum + p.stock, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -140,9 +144,14 @@ export default function Productos() {
             valueClassName="text-amber-600"
           />
           <StatCard
-            icon={<DollarSign className="w-6 h-6 text-purple-600" />}
-            label="Valor Total"
-            value={`$${(totalValue / 1000).toFixed(0)}k`}
+            icon={<Package className="w-6 h-6 text-purple-600" />}
+            label="Stock Total"
+            value={
+              <span>
+                {totalStock}
+                <span className="text-xl ml-1 text-slate-500">items</span>
+              </span>
+            }
             gradientClassName="bg-gradient-to-r from-purple-500 to-pink-500"
             iconBgClassName="bg-purple-100"
             valueClassName="text-purple-600"
@@ -173,7 +182,7 @@ export default function Productos() {
                   <Th>Código</Th>
                   <Th>Descripción</Th>
                   <Th>Stock</Th>
-                  <Th>Precio</Th>
+                  <Th>Unidad</Th>
                   <Th>Estado</Th>
                   <Th align="right">Acciones</Th>
                 </tr>
@@ -185,11 +194,13 @@ export default function Productos() {
                     <td className="px-6 py-4">{p.descripcion}</td>
                     <td className="px-6 py-4">
                       <span className={p.stock < 10 ? "text-amber-600 font-bold" : "font-bold"}>
-                        {p.stock} kg
+                        {p.stock}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      ${p.precio.toLocaleString()}
+                      <span className="px-3 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700">
+                        {p.tipo_cantidad || "unidades"}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -222,10 +233,11 @@ export default function Productos() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 label="Código"
+                type="number"
                 required
                 value={formData.codigo}
-                onChange={(v) => setFormData({ ...formData, codigo: v })}
-                placeholder="PROD-001"
+                onChange={(v) => setFormData({ ...formData, codigo: Number(v) || 0 })}
+                placeholder="101"
               />
 
               <Input
@@ -236,26 +248,36 @@ export default function Productos() {
                 placeholder="Merluza fresca"
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Stock"
-                  type="number"
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Tipo de Cantidad
+                </label>
+                <select
                   required
-                  min={0}
-                  value={formData.stock}
-                  onChange={(v) => setFormData({ ...formData, stock: Number(v) || 0 })}
-                />
-
-                <Input
-                  label="Precio"
-                  type="number"
-                  required
-                  min={0}
-                  step="0.01"
-                  value={formData.precio}
-                  onChange={(v) => setFormData({ ...formData, precio: Number(v) || 0 })}
-                />
+                  value={formData.tipo_cantidad}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      tipo_cantidad: e.target.value as "unidades" | "cajas" | "kg",
+                    })
+                  }
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                >
+                  <option value="unidades">Unidades</option>
+                  <option value="cajas">Cajas</option>
+                  <option value="kg">Kilogramos</option>
+                </select>
               </div>
+
+              <Input
+                label="Stock Inicial"
+                type="number"
+                required
+                min={0}
+                value={formData.stock}
+                onChange={(v) => setFormData({ ...formData, stock: Number(v) || 0 })}
+                placeholder="100"
+              />
 
               <div className="flex gap-3 pt-4">
                 <button
