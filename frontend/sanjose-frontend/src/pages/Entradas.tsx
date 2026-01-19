@@ -151,7 +151,7 @@ export default function Entradas() {
     }
   };
 
-  const handleAnularFactura = async (numeroFactura: number) => {
+  const handleAnularFactura = async (_numeroFactura: number) => {
     if (!confirm("¿Anular toda la factura?")) return;
     setSuccessMessage("Factura anulada exitosamente");
     setTimeout(() => setSuccessMessage(""), 3000);

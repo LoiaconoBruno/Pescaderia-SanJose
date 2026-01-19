@@ -51,7 +51,7 @@ export default function Productos() {
     }, 1000);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (_id: number) => {
     if (!confirm("¿Estás seguro de eliminar este producto?")) return;
     setSuccessMessage("Producto eliminado");
     setTimeout(() => setSuccessMessage(""), 3000);
@@ -194,8 +194,8 @@ export default function Productos() {
                           </span>
                           <span
                             className={`px-2 py-0.5 rounded text-xs font-bold ${p.stock > 10
-                                ? "bg-green-100 text-green-700"
-                                : "bg-amber-100 text-amber-700"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-amber-100 text-amber-700"
                               }`}
                           >
                             {p.stock > 10 ? "✓" : "⚠"}
@@ -278,8 +278,8 @@ export default function Productos() {
                         <td className="px-4 lg:px-6 py-3 lg:py-4">
                           <span
                             className={`px-2 lg:px-3 py-1 rounded text-xs font-bold ${p.stock > 10
-                                ? "bg-green-100 text-green-700"
-                                : "bg-amber-100 text-amber-700"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-amber-100 text-amber-700"
                               }`}
                           >
                             {p.stock > 10 ? "✓ Normal" : "⚠ Bajo"}

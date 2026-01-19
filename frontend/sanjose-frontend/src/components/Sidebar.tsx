@@ -1,22 +1,22 @@
-import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import type { LucideIcon } from "lucide-react";
 import {
+  BarChart3,
+  ChevronLeft,
+  Fish,
   LayoutDashboard,
+  LogOut,
+  Menu,
   Package,
+  Settings,
   TrendingDown,
   TrendingUp,
   Users,
-  BarChart3,
-  Settings,
-  LogOut,
-  Fish,
-  ChevronLeft,
   Waves,
   X,
-  Menu,
 } from "lucide-react";
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 type MenuItem = {
   name: string;
@@ -32,13 +32,48 @@ export default function Sidebar() {
   const [hidden, setHidden] = useState(false); // ✅ cerrar/ocultar sidebar
 
   const menuItems: MenuItem[] = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, color: "from-blue-500 to-cyan-500" },
-    { name: "Productos", href: "/productos", icon: Package, color: "from-blue-500 to-indigo-500" },
-    { name: "Entradas", href: "/entradas", icon: TrendingUp, color: "from-green-500 to-emerald-500" },
-    { name: "Salidas", href: "/salidas", icon: TrendingDown, color: "from-red-500 to-orange-500" },
-    { name: "Proveedores", href: "/proveedores", icon: Users, color: "from-purple-500 to-pink-500" },
-    { name: "Reportes", href: "/reportes", icon: BarChart3, color: "from-amber-500 to-orange-500" },
-    { name: "Configuración", href: "/configuracion", icon: Settings, color: "from-slate-500 to-slate-600" },
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: LayoutDashboard,
+      color: "from-blue-500 to-cyan-500",
+    },
+    {
+      name: "Productos",
+      href: "/productos",
+      icon: Package,
+      color: "from-blue-500 to-indigo-500",
+    },
+    {
+      name: "Entradas",
+      href: "/entradas",
+      icon: TrendingUp,
+      color: "from-green-500 to-emerald-500",
+    },
+    {
+      name: "Salidas",
+      href: "/salidas",
+      icon: TrendingDown,
+      color: "from-red-500 to-orange-500",
+    },
+    {
+      name: "Proveedores",
+      href: "/proveedores",
+      icon: Users,
+      color: "from-purple-500 to-pink-500",
+    },
+    {
+      name: "Reportes",
+      href: "/reportes",
+      icon: BarChart3,
+      color: "from-amber-500 to-orange-500",
+    },
+    {
+      name: "Configuración",
+      href: "/configuracion",
+      icon: Settings,
+      color: "from-slate-500 to-slate-600",
+    },
   ];
 
   const handleLogout = () => {
@@ -82,7 +117,9 @@ export default function Sidebar() {
           <div className="absolute top-0 right-0 opacity-10">
             <Waves className="w-24 h-24 text-cyan-400" />
           </div>
-          <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} relative z-10`}>
+          <div
+            className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} relative z-10`}
+          >
             <div className="p-2.5 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg">
               <Fish size={collapsed ? 28 : 24} className="text-white" />
             </div>
@@ -91,7 +128,9 @@ export default function Sidebar() {
                 <h1 className="font-bold text-xl bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                   San Jose
                 </h1>
-                <p className="text-xs text-cyan-300/80 font-medium">Gestión de Stock</p>
+                <p className="text-xs text-cyan-300/80 font-medium">
+                  Gestión de Stock
+                </p>
               </div>
             )}
           </div>
@@ -149,7 +188,9 @@ export default function Sidebar() {
                 {({ isActive }) => (
                   <>
                     {/* brillo suave detrás cuando está activo */}
-                    {isActive && <span className="absolute inset-0 bg-white/10" />}
+                    {isActive && (
+                      <span className="absolute inset-0 bg-white/10" />
+                    )}
 
                     <Icon
                       size={20}
@@ -160,7 +201,9 @@ export default function Sidebar() {
                     />
 
                     {!collapsed && (
-                      <span className="font-semibold relative z-10">{item.name}</span>
+                      <span className="font-semibold relative z-10">
+                        {item.name}
+                      </span>
                     )}
 
                     {isActive && !collapsed && (
@@ -185,7 +228,10 @@ export default function Sidebar() {
             ].join(" ")}
             title={collapsed ? "Cerrar sesión" : ""}
           >
-            <LogOut size={20} className="group-hover:scale-110 transition-transform" />
+            <LogOut
+              size={20}
+              className="group-hover:scale-110 transition-transform"
+            />
             {!collapsed && <span className="font-semibold">Cerrar sesión</span>}
           </button>
         </div>
@@ -194,8 +240,3 @@ export default function Sidebar() {
   );
 }
 
-// Puntito de activo (solo cuando NO está colapsado, opcional)
-function NavLinkEndDot({ collapsed }: { collapsed: boolean }) {
-  if (collapsed) return null;
-  return <span className="inline-block w-2 h-2 rounded-full bg-white/70 opacity-0 group-[.active]:opacity-100 ml-auto" />;
-}
