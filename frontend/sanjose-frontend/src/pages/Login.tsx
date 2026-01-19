@@ -127,15 +127,7 @@ export default function Login() {
             </div>
 
             {/* Link de recuperación - Opcional */}
-            <div className="text-center">
-              <button
-                type="button"
-                className="text-cyan-600 hover:text-cyan-700 text-xs sm:text-sm font-semibold transition-colors"
-                onClick={() => alert("Funcionalidad en desarrollo")}
-              >
-                ¿Olvidaste tu contraseña?
-              </button>
-            </div>
+
           </div>
         </div>
 
