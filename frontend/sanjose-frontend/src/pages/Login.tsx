@@ -43,7 +43,8 @@ export default function Login() {
 
     try {
       await login(email.trim(), password);
-      // ✅ El useEffect de arriba manejará la redirección
+      // ✅ La redirección se maneja automáticamente por el useEffect cuando user cambia
+      // No hagas nada aquí, el useEffect detectará que user existe y redirigirá
     } catch (err: any) {
       // El error ya está en el contexto, pero mostramos localmente también
       setLocalError(err.message || "Error al iniciar sesión. Verifica tus credenciales.");
