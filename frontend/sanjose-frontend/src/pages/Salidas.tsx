@@ -26,6 +26,12 @@ type FormData = {
   cantidad: number;
 };
 
+// Función helper para formatear fechas correctamente
+const formatearFecha = (fechaString: string) => {
+  const [year, month, day] = fechaString.split('-');
+  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString("es-AR");
+};
+
 export default function Salidas() {
   const { productos, fetchProductos } = useProductos();
   const { movimientos, isLoading, error, createSalida } = useMovimientos({
@@ -108,9 +114,9 @@ export default function Salidas() {
   };
 
   const salidasHoy = useMemo(() => {
-    const hoy = new Date().toDateString();
+    const hoy = new Date().toISOString().split("T")[0];
     return movimientos.filter(
-      (m) => m.tipo === "SALIDA" && m.estado === true && new Date(m.fecha).toDateString() === hoy
+      (m) => m.tipo === "SALIDA" && m.estado === true && m.fecha === hoy
     );
   }, [movimientos]);
 
@@ -259,7 +265,7 @@ export default function Salidas() {
                     </div>
                     <div className="flex justify-between items-center text-xs">
                       <span className="text-slate-600">
-                        {new Date(m.fecha).toLocaleDateString("es-AR")}
+                        {formatearFecha(m.fecha)}
                       </span>
                       <span className="px-2 py-1 rounded-md font-semibold bg-green-100 text-green-700">
                         ✓ Completada
@@ -288,7 +294,7 @@ export default function Salidas() {
                         className="border-b border-slate-100 hover:bg-red-50/50 transition-all duration-200"
                       >
                         <td className="px-6 py-4 text-sm text-slate-900 font-medium">
-                          {new Date(m.fecha).toLocaleDateString("es-AR")}
+                          {formatearFecha(m.fecha)}
                         </td>
                         <td className="px-6 py-4 text-slate-700 font-mono text-sm">
                           {m.producto?.codigo}

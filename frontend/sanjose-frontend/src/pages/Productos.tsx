@@ -1,14 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
-import api from "../lib/axios";
 import {
   Plus,
-  Trash2,
   AlertCircle,
   Package,
   Search,
   CheckCircle,
   X,
 } from "lucide-react";
+
+// Simulación de API
+const api = {
+  get: async (url: string) => {
+    const stored = localStorage.getItem('productos');
+    return { data: stored ? JSON.parse(stored) : [] };
+  },
+  post: async (url: string, data: any) => {
+    const stored = localStorage.getItem('productos');
+    const productos = stored ? JSON.parse(stored) : [];
+    const newProducto = { ...data, id: Date.now() };
+    productos.push(newProducto);
+    localStorage.setItem('productos', JSON.stringify(productos));
+    return { data: newProducto };
+  }
+};
 
 type Producto = {
   id: number;
@@ -59,8 +73,7 @@ export default function Productos() {
     setLoading(true);
     setErrorMessage("");
     try {
-      // ✅ AJUSTÁ si tu endpoint es distinto
-      const res = await api.get<Producto[]>("/productos");
+      const res = await api.get("/productos");
       setProductos(res.data || []);
     } catch (err: any) {
       const msg =
@@ -96,7 +109,6 @@ export default function Productos() {
         return;
       }
 
-      // ✅ AJUSTÁ si tu backend espera otros nombres
       await api.post("/productos", {
         codigo: formData.codigo,
         descripcion: formData.descripcion.trim(),
@@ -117,25 +129,6 @@ export default function Productos() {
       showError(msg);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm("¿Estás seguro de eliminar este producto?")) return;
-    setErrorMessage("");
-
-    try {
-      // ✅ AJUSTÁ si tu endpoint es distinto
-      await api.delete(`/productos/${id}`);
-      showSuccess("Producto eliminado");
-      await cargarProductos();
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Error al eliminar producto";
-      showError(msg);
     }
   };
 
@@ -305,12 +298,6 @@ export default function Productos() {
                         </div>
                         <p className="font-semibold text-slate-900">{p.descripcion}</p>
                       </div>
-                      <button
-                        onClick={() => handleDelete(p.id)}
-                        className="p-2 hover:bg-red-100 rounded-lg transition ml-2"
-                      >
-                        <Trash2 size={16} className="text-red-600" />
-                      </button>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                       <div>
@@ -350,9 +337,6 @@ export default function Productos() {
                       <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs sm:text-sm font-bold">
                         Estado
                       </th>
-                      <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs sm:text-sm font-bold">
-                        Acciones
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -386,14 +370,6 @@ export default function Productos() {
                           >
                             {p.stock > 10 ? "✓ Normal" : "⚠ Bajo"}
                           </span>
-                        </td>
-                        <td className="px-4 lg:px-6 py-3 lg:py-4 text-right">
-                          <button
-                            onClick={() => handleDelete(p.id)}
-                            className="p-2 hover:bg-red-100 rounded-lg lg:rounded-xl transition"
-                          >
-                            <Trash2 size={18} className="text-red-600" />
-                          </button>
                         </td>
                       </tr>
                     ))}
