@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import api from "../lib/axios";
 import {
   Plus,
   Trash2,
@@ -9,13 +10,13 @@ import {
   X,
 } from "lucide-react";
 
-// Datos demo
-const productosDemo = [
-  { id: 1, codigo: 101, descripcion: "Merluza Fresca", stock: 45, tipo_cantidad: "kg" },
-  { id: 2, codigo: 102, descripcion: "Salmon Rosado", stock: 8, tipo_cantidad: "kg" },
-  { id: 3, codigo: 103, descripcion: "Langostinos", stock: 120, tipo_cantidad: "unidades" },
-  { id: 4, codigo: 104, descripcion: "Camarones", stock: 5, tipo_cantidad: "kg" },
-];
+type Producto = {
+  id: number;
+  codigo: number;
+  descripcion: string;
+  stock: number;
+  tipo_cantidad: "unidades" | "cajas" | "kg" | string;
+};
 
 type FormData = {
   codigo: number;
@@ -25,11 +26,15 @@ type FormData = {
 };
 
 export default function Productos() {
-  const [productos] = useState(productosDemo);
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const initialForm: FormData = {
     codigo: 0,
@@ -40,36 +45,116 @@ export default function Productos() {
 
   const [formData, setFormData] = useState<FormData>(initialForm);
 
-  const handleSubmit = () => {
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setFormData(initialForm);
-      setShowModal(false);
-      setSuccessMessage("¡Producto creado exitosamente!");
-      setIsSubmitting(false);
-      setTimeout(() => setSuccessMessage(""), 3000);
-    }, 1000);
-  };
-
-  const handleDelete = (_id: number) => {
-    if (!confirm("¿Estás seguro de eliminar este producto?")) return;
-    setSuccessMessage("Producto eliminado");
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg);
     setTimeout(() => setSuccessMessage(""), 3000);
   };
 
-  const filteredProductos = productos.filter(
-    (p) =>
-      p.codigo.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const showError = (msg: string) => {
+    setErrorMessage(msg);
+    setTimeout(() => setErrorMessage(""), 4000);
+  };
+
+  const cargarProductos = async () => {
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      // ✅ AJUSTÁ si tu endpoint es distinto
+      const res = await api.get<Producto[]>("/productos");
+      setProductos(res.data || []);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Error cargando productos";
+      showError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarProductos();
+  }, []);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      if (!formData.codigo || formData.codigo <= 0) {
+        showError("Código inválido");
+        return;
+      }
+      if (!formData.descripcion.trim()) {
+        showError("Descripción requerida");
+        return;
+      }
+      if (formData.stock < 0) {
+        showError("Stock inválido");
+        return;
+      }
+
+      // ✅ AJUSTÁ si tu backend espera otros nombres
+      await api.post("/productos", {
+        codigo: formData.codigo,
+        descripcion: formData.descripcion.trim(),
+        stock: formData.stock,
+        tipo_cantidad: formData.tipo_cantidad,
+      });
+
+      setFormData(initialForm);
+      setShowModal(false);
+      showSuccess("¡Producto creado exitosamente!");
+      await cargarProductos();
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Error al crear producto";
+      showError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+    setErrorMessage("");
+
+    try {
+      // ✅ AJUSTÁ si tu endpoint es distinto
+      await api.delete(`/productos/${id}`);
+      showSuccess("Producto eliminado");
+      await cargarProductos();
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Error al eliminar producto";
+      showError(msg);
+    }
+  };
+
+  const filteredProductos = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return productos.filter(
+      (p) =>
+        p.codigo.toString().includes(term) ||
+        p.descripcion.toLowerCase().includes(term)
+    );
+  }, [productos, searchTerm]);
 
   const lowStock = productos.filter((p) => p.stock < 10).length;
-  const totalStock = productos.reduce((sum, p) => sum + p.stock, 0);
+  const totalStock = productos.reduce((sum, p) => sum + (p.stock || 0), 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <main className="max-w-7xl mx-auto p-3 sm:p-6 lg:p-8">
-        {/* Header Responsive */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 sm:mb-8">
           <div>
             <div className="flex items-center gap-2 sm:gap-3 mb-2">
@@ -94,15 +179,26 @@ export default function Productos() {
           </button>
         </div>
 
-        {/* Success Message */}
+        {/* Mensajes */}
         {successMessage && (
           <div className="bg-green-50 border-l-4 border-green-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex gap-2 sm:gap-3">
             <CheckCircle className="text-green-600 flex-shrink-0 w-5 h-5" />
-            <p className="text-green-700 font-medium text-sm sm:text-base">{successMessage}</p>
+            <p className="text-green-700 font-medium text-sm sm:text-base">
+              {successMessage}
+            </p>
           </div>
         )}
 
-        {/* Stats Responsive */}
+        {errorMessage && (
+          <div className="bg-red-50 border-l-4 border-red-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex gap-2 sm:gap-3">
+            <AlertCircle className="text-red-600 flex-shrink-0 w-5 h-5" />
+            <p className="text-red-700 font-medium text-sm sm:text-base">
+              {errorMessage}
+            </p>
+          </div>
+        )}
+
+        {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
           <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-blue-100 p-4 sm:p-6">
             <div className="flex items-center justify-between">
@@ -147,14 +243,16 @@ export default function Productos() {
                 </p>
                 <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-purple-600">
                   {totalStock}
-                  <span className="text-base sm:text-lg lg:text-xl ml-1 text-slate-500">items</span>
+                  <span className="text-base sm:text-lg lg:text-xl ml-1 text-slate-500">
+                    items
+                  </span>
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Search Responsive */}
+        {/* Search */}
         <div className="mb-4 sm:mb-6 relative">
           <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 sm:w-5 sm:h-5" />
           <input
@@ -165,9 +263,13 @@ export default function Productos() {
           />
         </div>
 
-        {/* Mobile: Cards, Desktop: Table */}
+        {/* Tabla / Cards */}
         <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden">
-          {filteredProductos.length === 0 ? (
+          {loading ? (
+            <div className="p-8 sm:p-12 text-center text-slate-600">
+              Cargando productos...
+            </div>
+          ) : filteredProductos.length === 0 ? (
             <div className="p-8 sm:p-12 text-center">
               <Package className="w-12 h-12 sm:w-16 sm:h-16 text-slate-300 mx-auto mb-4" />
               <p className="text-slate-500 text-base sm:text-lg mb-4">
@@ -194,8 +296,8 @@ export default function Productos() {
                           </span>
                           <span
                             className={`px-2 py-0.5 rounded text-xs font-bold ${p.stock > 10
-                              ? "bg-green-100 text-green-700"
-                              : "bg-amber-100 text-amber-700"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-amber-100 text-amber-700"
                               }`}
                           >
                             {p.stock > 10 ? "✓" : "⚠"}
@@ -278,8 +380,8 @@ export default function Productos() {
                         <td className="px-4 lg:px-6 py-3 lg:py-4">
                           <span
                             className={`px-2 lg:px-3 py-1 rounded text-xs font-bold ${p.stock > 10
-                              ? "bg-green-100 text-green-700"
-                              : "bg-amber-100 text-amber-700"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-amber-100 text-amber-700"
                               }`}
                           >
                             {p.stock > 10 ? "✓ Normal" : "⚠ Bajo"}
@@ -302,7 +404,7 @@ export default function Productos() {
           )}
         </div>
 
-        {/* Modal Responsive */}
+        {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -328,7 +430,10 @@ export default function Productos() {
                     required
                     value={formData.codigo || ""}
                     onChange={(e) =>
-                      setFormData({ ...formData, codigo: Number(e.target.value) || 0 })
+                      setFormData({
+                        ...formData,
+                        codigo: Number(e.target.value) || 0,
+                      })
                     }
                     placeholder="101"
                     className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm sm:text-base"
@@ -361,7 +466,7 @@ export default function Productos() {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        tipo_cantidad: e.target.value as "unidades" | "cajas" | "kg",
+                        tipo_cantidad: e.target.value as any,
                       })
                     }
                     className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm sm:text-base"
@@ -382,7 +487,10 @@ export default function Productos() {
                     min={0}
                     value={formData.stock || ""}
                     onChange={(e) =>
-                      setFormData({ ...formData, stock: Number(e.target.value) || 0 })
+                      setFormData({
+                        ...formData,
+                        stock: Number(e.target.value) || 0,
+                      })
                     }
                     placeholder="100"
                     className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm sm:text-base"
@@ -398,6 +506,7 @@ export default function Productos() {
                     Cancelar
                   </button>
                   <button
+                    type="button"
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                     className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl py-2.5 sm:py-3 font-semibold disabled:opacity-50 text-sm sm:text-base"
