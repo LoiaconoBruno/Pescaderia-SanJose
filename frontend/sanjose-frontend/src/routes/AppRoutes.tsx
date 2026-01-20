@@ -1,4 +1,3 @@
-// AppRoutes.tsx - ACÁ ponemos el Router
 import { Routes, Route, Navigate, HashRouter } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
 import PrivateLayout from "../layouts/PrivateLayout";
@@ -10,7 +9,7 @@ import Salidas from "../pages/Salidas";
 
 export default function AppRoutes() {
   return (
-    <HashRouter> {/* ← Ponelo ACÁ */}
+    <HashRouter> {/* ← Este es el ÚNICO Router */}
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route element={<PrivateRoute />}>
