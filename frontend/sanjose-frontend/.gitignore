@@ -1,24 +1,115 @@
-# Logs
-logs
+####################################
+# SISTEMA OPERATIVO
+####################################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+####################################
+# EDITORES / IDEs
+####################################
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+
+####################################
+# LOGS
+####################################
 *.log
+logs/
+tmp/
+*.tmp
+
+####################################
+# VARIABLES DE ENTORNO / SECRETOS
+####################################
+.env
+.env.*
+!.env.example
+
+####################################
+# GO (BACKEND)
+####################################
+# Binarios
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Build / vendor
+/bin/
+build/
+vendor/
+
+# Go workspace
+go.work
+go.work.sum
+
+####################################
+# NODE / FRONTEND (React, Vite)
+####################################
+node_modules/
+dist/
+build/
+.vite/
+.cache/
+
+####################################
+# FRONTEND TEMP / DEBUG
+####################################
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+####################################
+# TESTING
+####################################
+coverage/
+*.cover
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+####################################
+# DATABASE
+####################################
+*.sql
+*.dump
+*.backup
+*.sqlite
+*.db
+
+####################################
+# DOCKER
+####################################
+docker-compose.override.yml
+.env.docker
+
+####################################
+# RENDER / DEPLOY
+####################################
+.render/
+.vercel/
+.netlify/
+
+####################################
+# ARCHIVOS GENERADOS
+####################################
+*.zip
+*.tar
+*.gz
+
+####################################
+# OTROS
+####################################
+*.pem
+*.key
+*.crt
