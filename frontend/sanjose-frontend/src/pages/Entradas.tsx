@@ -133,13 +133,6 @@ export default function Entradas() {
     );
   }, [entradas]);
 
-  const totalItems = useMemo(() => {
-    return facturasAgrupadas.reduce(
-      (sum: number, f: any) =>
-        sum + f.productos.reduce((s: number, p: any) => s + Math.abs(p.cantidad), 0),
-      0
-    );
-  }, [facturasAgrupadas]);
 
   const filteredFacturas = useMemo(() => {
     const term = searchTerm.toLowerCase();
@@ -378,8 +371,8 @@ export default function Entradas() {
                 >
                   <div
                     className={`p-3 sm:p-4 lg:p-6 ${factura.estado
-                        ? "bg-gradient-to-r from-green-50 to-emerald-50"
-                        : "bg-gray-100"
+                      ? "bg-gradient-to-r from-green-50 to-emerald-50"
+                      : "bg-gray-100"
                       } border-b`}
                   >
                     <div className="flex flex-col gap-3 sm:hidden">
@@ -392,8 +385,8 @@ export default function Entradas() {
                           </div>
                           <div
                             className={`px-2 py-1 rounded-lg text-xs font-bold ${factura.estado
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
                               }`}
                           >
                             {factura.estado ? "✓" : "✗"}
@@ -432,8 +425,8 @@ export default function Entradas() {
                         </div>
                         <div
                           className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${factura.estado
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
                             }`}
                         >
                           {factura.estado ? "✓ Activa" : "✗ Anulada"}
