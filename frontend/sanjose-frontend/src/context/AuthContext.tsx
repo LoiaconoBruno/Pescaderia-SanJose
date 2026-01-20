@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   useCallback,
   type ReactNode,
 } from "react";
@@ -32,12 +31,11 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // ← Cambiado a false (ya no carga sesión)
   const [error, setError] = useState<string | null>(null);
 
   const logout = useCallback(() => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
+    // Solo limpiamos el estado (ya no hay localStorage)
     setToken(null);
     setUser(null);
     setError(null);
@@ -48,42 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await api.get<User>("/auth/profile");
       setUser(response.data);
-      localStorage.setItem("auth_user", JSON.stringify(response.data));
     } catch (err) {
       console.warn("No se pudo refrescar el perfil:", err);
     }
   }, [token]);
-
-  useEffect(() => {
-    const loadSession = async () => {
-      try {
-        const storedToken = localStorage.getItem("auth_token");
-        const storedUser = localStorage.getItem("auth_user");
-
-        if (storedToken && storedUser) {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser) as User);
-
-          // Refrescar perfil del backend
-          try {
-            const response = await api.get<User>("/auth/profile");
-            setUser(response.data);
-            localStorage.setItem("auth_user", JSON.stringify(response.data));
-          } catch {
-            // Si falla, mantenemos el usuario del localStorage
-            console.warn("No se pudo verificar la sesión");
-          }
-        }
-      } catch (err) {
-        console.error("Error al restaurar sesión:", err);
-        logout();
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadSession();
-  }, [logout]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
@@ -97,14 +63,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { token: newToken, user: newUser } = response.data;
 
-      localStorage.setItem("auth_token", newToken);
-      localStorage.setItem("auth_user", JSON.stringify(newUser));
-
+      // Solo guardamos en memoria (state)
       setToken(newToken);
       setUser(newUser);
     } catch (err: any) {
       const msg =
-        err?.response?.data?.error || // ✅ Tu backend usa "error" no "message"
+        err?.response?.data?.error ||
         err?.message ||
         "Credenciales inválidas o error de conexión";
       setError(msg);
@@ -129,19 +93,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const response = await api.post<{ token: string; user: User }>("/auth/signup", {
           email,
           password,
-          confirm_password: confirmPassword, // ✅ Así lo espera tu backend
+          confirm_password: confirmPassword,
         });
 
         const { token: newToken, user: newUser } = response.data;
 
-        localStorage.setItem("auth_token", newToken);
-        localStorage.setItem("auth_user", JSON.stringify(newUser));
-
+        // Solo guardamos en memoria (state)
         setToken(newToken);
         setUser(newUser);
       } catch (err: any) {
         const msg =
-          err?.response?.data?.error || // ✅ Tu backend usa "error"
+          err?.response?.data?.error ||
           err?.message ||
           "Error al crear la cuenta";
         setError(msg);
