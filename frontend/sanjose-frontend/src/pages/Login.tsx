@@ -13,10 +13,10 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
 
-  // Si ya está autenticado, ir a entradas (o a la ruta original)
+  // Si ya está autenticado, ir a productos (o a la ruta original)
   useEffect(() => {
     if (user) {
-      const from = (location.state as any)?.from?.pathname || "/entradas";
+      const from = (location.state as any)?.from?.pathname || "/productos";
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);
