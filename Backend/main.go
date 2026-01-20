@@ -1,23 +1,26 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
+
 	"sanJoseProyect/database"
 	"sanJoseProyect/models"
 	"sanJoseProyect/routes"
 )
 
 func main() {
+	// Cargar variables de entorno
 	if err := godotenv.Load(); err != nil {
 		log.Println("⚠️  No se pudo cargar el archivo .env")
 	}
 
+	// Variables críticas
 	dbUrl := os.Getenv("DATABASE_URL")
 	if dbUrl == "" {
 		log.Fatal("❌ No se pudo cargar la URL de la DB")
@@ -31,21 +34,33 @@ func main() {
 	// Conectar a la base de datos
 	database.Connect()
 
-	// Migrar modelos
-	database.DB.AutoMigrate(&models.User{})
-	database.DB.AutoMigrate(&models.Product{})
-	database.DB.AutoMigrate(&models.Movement{})
+	// Migraciones
+	database.DB.AutoMigrate(
+		&models.User{},
+		&models.Product{},
+		&models.Movement{},
+	)
 
 	log.Println("✅ Migraciones completadas")
 
-	// Inicializar servidor Fiber
+	// Inicializar Fiber
 	app := fiber.New()
 
+	// =========================
+	// CORS
+	// =========================
 	app.Use(cors.New(cors.Config{
 		AllowCredentials: true,
-		AllowOrigins:     "http://localhost:3000,http://localhost:3001,http://localhost:5173,http://localhost:5137,https://loiaconobruno.github.io",
-		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders:     "Content-Type,Authorization",
+		AllowOrigins: strings.Join([]string{
+			"http://localhost:3000",
+			"http://localhost:3001",
+			"http://localhost:5173",
+			"http://localhost:5137",
+			"https://loiaconobruno.github.io",
+			"https://mcldesarrolloweb.com",
+		}, ","),
+		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders: "Content-Type,Authorization",
 	}))
 
 	// Rutas
@@ -60,7 +75,7 @@ func main() {
 
 	// Levantar servidor
 	addr := ":" + port
-	fmt.Println("✅ Servidor corriendo en http://localhost" + addr)
+	log.Println("✅ Servidor corriendo en", addr)
 	if err := app.Listen(addr); err != nil {
 		log.Fatalf("❌ Error al iniciar el servidor: %v", err)
 	}
