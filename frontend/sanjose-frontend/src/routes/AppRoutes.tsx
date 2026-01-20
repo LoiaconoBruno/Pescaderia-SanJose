@@ -16,7 +16,6 @@ export default function AppRoutes() {
 
       {/* Privadas */}
       <Route element={<PrivateRoute />}>
-        {/* Layout privado (sidebar+header) */}
         <Route element={<PrivateLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/productos" element={<Productos />} />
