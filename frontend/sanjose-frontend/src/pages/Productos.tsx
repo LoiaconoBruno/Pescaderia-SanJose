@@ -10,11 +10,11 @@ import {
 
 // Simulación de API
 const api = {
-  get: async (url: string) => {
+  get: async (_url: string) => {
     const stored = localStorage.getItem('productos');
     return { data: stored ? JSON.parse(stored) : [] };
   },
-  post: async (url: string, data: any) => {
+  post: async (_url: string, data: any) => {
     const stored = localStorage.getItem('productos');
     const productos = stored ? JSON.parse(stored) : [];
     const newProducto = { ...data, id: Date.now() };
