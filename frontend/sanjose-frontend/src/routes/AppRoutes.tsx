@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom"; // ← Agregá Routes
 import PrivateRoute from "./PrivateRoute";
 import PrivateLayout from "../layouts/PrivateLayout";
 
