@@ -13,10 +13,10 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
 
-  // Si ya está autenticado, ir a dashboard (o a la ruta original)
+  // Si ya está autenticado, ir a entradas (o a la ruta original)
   useEffect(() => {
     if (user) {
-      const from = (location.state as any)?.from?.pathname || "/dashboard";
+      const from = (location.state as any)?.from?.pathname || "/entradas";
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);
@@ -42,10 +42,7 @@ export default function Login() {
 
     try {
       await login(email.trim(), password);
-
-      // ✅ “Seguro”: si por alguna razón el user tarda, lo mandamos igual
-      // (Si el useEffect ya navegó, esto no molesta)
-      navigate("/dashboard", { replace: true });
+      // La navegación se maneja automáticamente en el useEffect cuando user cambia
     } catch (err: any) {
       setLocalError(err.message || "Error al iniciar sesión. Verifica tus credenciales.");
     }
