@@ -3,9 +3,9 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   type ReactNode,
 } from "react";
-
 import api from "../lib/axios";
 
 interface User {
@@ -31,13 +31,36 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Iniciar en true mientras chequeamos localStorage
   const [error, setError] = useState<string | null>(null);
+
+  // Restaurar sesión al cargar
+  useEffect(() => {
+    const storedToken = localStorage.getItem("auth_token");
+    const storedUser = localStorage.getItem("auth_user");
+
+    if (storedToken && storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(parsedUser);
+        api.defaults.headers.common.Authorization = `Bearer ${storedToken}`;
+      } catch (err) {
+        console.error("Error al restaurar sesión:", err);
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("auth_user");
+      }
+    }
+
+    setIsLoading(false);
+  }, []);
 
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
     setError(null);
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
     delete api.defaults.headers.common.Authorization;
   }, []);
 
@@ -46,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await api.get<User>("/auth/profile");
       setUser(response.data);
+      localStorage.setItem("auth_user", JSON.stringify(response.data));
     } catch (err) {
       console.warn("No se pudo refrescar el perfil:", err);
     }
@@ -66,7 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(newToken);
       setUser(newUser);
 
-      // ✅ IMPORTANTE: setear Authorization para todas las requests
+      // Guardar en localStorage
+      localStorage.setItem("auth_token", newToken);
+      localStorage.setItem("auth_user", JSON.stringify(newUser));
+
+      // Setear Authorization para todas las requests
       api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
     } catch (err: any) {
       const msg =
@@ -103,7 +131,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(newToken);
         setUser(newUser);
 
-        // ✅ IMPORTANTE: setear Authorization para todas las requests
+        // Guardar en localStorage
+        localStorage.setItem("auth_token", newToken);
+        localStorage.setItem("auth_user", JSON.stringify(newUser));
+
+        // Setear Authorization para todas las requests
         api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
       } catch (err: any) {
         const msg =
