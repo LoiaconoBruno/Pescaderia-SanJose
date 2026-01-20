@@ -13,7 +13,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
 
-  // ✅ Si ya está autenticado, redirigir automáticamente
+  // Si ya está autenticado, ir a dashboard (o a la ruta original)
   useEffect(() => {
     if (user) {
       const from = (location.state as any)?.from?.pathname || "/dashboard";
@@ -25,7 +25,6 @@ export default function Login() {
     e.preventDefault();
     setLocalError("");
 
-    // Validaciones básicas
     if (!email.trim() || !password.trim()) {
       setLocalError("Por favor complete todos los campos");
       return;
@@ -43,17 +42,17 @@ export default function Login() {
 
     try {
       await login(email.trim(), password);
-      // ✅ La redirección se maneja automáticamente por el useEffect cuando user cambia
-      // No hagas nada aquí, el useEffect detectará que user existe y redirigirá
+
+      // ✅ “Seguro”: si por alguna razón el user tarda, lo mandamos igual
+      // (Si el useEffect ya navegó, esto no molesta)
+      navigate("/dashboard", { replace: true });
     } catch (err: any) {
-      // El error ya está en el contexto, pero mostramos localmente también
       setLocalError(err.message || "Error al iniciar sesión. Verifica tus credenciales.");
     }
   };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 px-3 sm:px-4 py-6 sm:py-12 relative overflow-hidden">
-      {/* Decoración de fondo */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <Waves className="absolute -top-10 -left-10 w-40 h-40 sm:w-64 sm:h-64 text-cyan-200/30 -rotate-12" />
         <Fish className="absolute top-10 sm:top-20 right-10 sm:right-20 w-20 h-20 sm:w-32 sm:h-32 text-blue-200/20 rotate-45" />
@@ -63,7 +62,6 @@ export default function Login() {
 
       <div className="w-full max-w-md relative z-10">
         <div className="bg-white/90 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden border border-white/20">
-          {/* Header con branding */}
           <div className="bg-gradient-to-br from-cyan-600 via-blue-600 to-teal-600 px-6 sm:px-8 py-8 sm:py-10 text-center relative">
             <div className="flex justify-center mb-3 sm:mb-4">
               <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-xl sm:rounded-2xl bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-xl">
@@ -71,20 +69,16 @@ export default function Login() {
               </div>
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white">Pescadería San José</h1>
-            <p className="text-cyan-100 font-medium text-sm sm:text-base">
-              Sistema de Gestión
-            </p>
+            <p className="text-cyan-100 font-medium text-sm sm:text-base">Sistema de Gestión</p>
             <div className="h-1 w-16 sm:w-20 bg-white/40 rounded-full mx-auto mt-2 sm:mt-3" />
           </div>
 
-          {/* Formulario */}
           <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-5 sm:space-y-6">
             <div className="text-center">
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Bienvenido</h2>
               <p className="text-slate-600 text-sm sm:text-base">Ingresa tus credenciales</p>
             </div>
 
-            {/* Mensaje de error */}
             {localError && (
               <div className="bg-red-50 border-l-4 border-red-500 rounded-lg sm:rounded-xl p-3 sm:p-4 flex gap-2 sm:gap-3 animate-shake">
                 <span className="text-red-600 text-lg sm:text-xl flex-shrink-0">⚠️</span>
@@ -93,7 +87,6 @@ export default function Login() {
             )}
 
             <div className="space-y-4 sm:space-y-5">
-              {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">
                   Email
@@ -110,7 +103,6 @@ export default function Login() {
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <label htmlFor="password" className="block text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">
                   Contraseña
@@ -133,16 +125,11 @@ export default function Login() {
                     disabled={authLoading}
                     aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                   >
-                    {showPassword ? (
-                      <EyeOff size={18} className="sm:w-5 sm:h-5" />
-                    ) : (
-                      <Eye size={18} className="sm:w-5 sm:h-5" />
-                    )}
+                    {showPassword ? <EyeOff size={18} className="sm:w-5 sm:h-5" /> : <Eye size={18} className="sm:w-5 sm:h-5" />}
                   </button>
                 </div>
               </div>
 
-              {/* Botón Submit */}
               <button
                 type="submit"
                 disabled={authLoading}
@@ -164,22 +151,18 @@ export default function Login() {
           </form>
         </div>
 
-        {/* Footer */}
         <p className="text-center text-slate-600 text-xs sm:text-sm mt-4 sm:mt-6 px-4">
           Sistema de gestión para pescaderías
         </p>
       </div>
 
-      {/* Animación de shake para errores */}
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           25% { transform: translateX(-10px); }
           75% { transform: translateX(10px); }
         }
-        .animate-shake {
-          animation: shake 0.5s ease-in-out;
-        }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
       `}</style>
     </main>
   );
