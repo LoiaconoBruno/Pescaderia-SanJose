@@ -31,14 +31,14 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // ← Cambiado a false (ya no carga sesión)
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const logout = useCallback(() => {
-    // Solo limpiamos el estado (ya no hay localStorage)
     setToken(null);
     setUser(null);
     setError(null);
+    delete api.defaults.headers.common.Authorization;
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -63,9 +63,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const { token: newToken, user: newUser } = response.data;
 
-      // Solo guardamos en memoria (state)
       setToken(newToken);
       setUser(newUser);
+
+      // ✅ IMPORTANTE: setear Authorization para todas las requests
+      api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
     } catch (err: any) {
       const msg =
         err?.response?.data?.error ||
@@ -98,9 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { token: newToken, user: newUser } = response.data;
 
-        // Solo guardamos en memoria (state)
         setToken(newToken);
         setUser(newUser);
+
+        // ✅ IMPORTANTE: setear Authorization para todas las requests
+        api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
       } catch (err: any) {
         const msg =
           err?.response?.data?.error ||
