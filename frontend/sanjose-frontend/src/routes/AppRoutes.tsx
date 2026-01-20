@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
+import { Routes, Route, Navigate, HashRouter } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
 import PrivateLayout from "../layouts/PrivateLayout";
 import Login from "../pages/Login";
@@ -9,7 +9,7 @@ import Salidas from "../pages/Salidas";
 
 export default function AppRoutes() {
   return (
-    <BrowserRouter basename="/bruno">
+    <HashRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
 
@@ -26,6 +26,6 @@ export default function AppRoutes() {
         <Route path="/" element={<Navigate to="/productos" replace />} />
         <Route path="*" element={<Navigate to="/productos" replace />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
