@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
 import PrivateLayout from "../layouts/PrivateLayout";
 import Login from "../pages/Login";
@@ -6,13 +6,13 @@ import Dashboard from "../pages/Dashboard";
 import Productos from "../pages/Productos";
 import Entradas from "../pages/Entradas";
 import Salidas from "../pages/Salidas";
-import { BrowserRouter } from "react-router-dom";
 
 export default function AppRoutes() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/bruno">
       <Routes>
         <Route path="/login" element={<Login />} />
+
         <Route element={<PrivateRoute />}>
           <Route element={<PrivateLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
@@ -21,8 +21,10 @@ export default function AppRoutes() {
             <Route path="/salidas" element={<Salidas />} />
           </Route>
         </Route>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+        {/* Redirecciones */}
+        <Route path="/" element={<Navigate to="/productos" replace />} />
+        <Route path="*" element={<Navigate to="/productos" replace />} />
       </Routes>
     </BrowserRouter>
   );
