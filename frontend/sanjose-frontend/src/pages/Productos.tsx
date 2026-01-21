@@ -127,30 +127,29 @@ export default function Productos() {
   }, [productos, searchTerm]);
 
   const lowStock = productos.filter((p) => p.stock < 10).length;
-  const totalStock = productos.reduce((sum, p) => sum + (p.stock || 0), 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <main className="max-w-7xl mx-auto p-3 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 sm:mb-8">
-          <div>
-            <div className="flex items-center gap-2 sm:gap-3 mb-2">
-              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-lg">
-                <Package className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-lg shrink-0">
+              <Package className="w-5 h-5 md:w-7 md:h-7 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Productos
               </h3>
+              <p className="text-slate-600 text-sm md:text-base mt-1">
+                Gestiona tu catálogo de productos
+              </p>
             </div>
-            <p className="text-slate-600 text-sm sm:text-base ml-9 sm:ml-16">
-              Gestiona tu catálogo de productos
-            </p>
           </div>
 
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl shadow-lg hover:scale-105 transition font-medium text-sm sm:text-base w-full sm:w-auto"
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-5 py-3.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95 font-medium"
           >
             <Plus size={20} />
             Agregar Producto
@@ -177,55 +176,18 @@ export default function Productos() {
         )}
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-blue-100 p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div className="bg-blue-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
-                <Package className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-              </div>
-              <div className="text-right">
-                <p className="text-slate-600 text-xs sm:text-sm font-medium mb-1">
-                  Total Productos
-                </p>
-                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-600">
-                  {productos.length}
-                </p>
-              </div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-amber-100 p-4 sm:p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="bg-amber-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
             </div>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-amber-100 p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div className="bg-amber-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
-                <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
-              </div>
-              <div className="text-right">
-                <p className="text-slate-600 text-xs sm:text-sm font-medium mb-1">
-                  Stock Bajo
-                </p>
-                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-amber-600">
-                  {lowStock}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-purple-100 p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center justify-between">
-              <div className="bg-purple-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
-                <Package className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
-              </div>
-              <div className="text-right">
-                <p className="text-slate-600 text-xs sm:text-sm font-medium mb-1">
-                  Stock Total
-                </p>
-                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-purple-600">
-                  {totalStock}
-                  <span className="text-base sm:text-lg lg:text-xl ml-1 text-slate-500">
-                    items
-                  </span>
-                </p>
-              </div>
+            <div className="text-right">
+              <p className="text-slate-600 text-xs sm:text-sm font-medium mb-1">
+                Stock Bajo
+              </p>
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-amber-600">
+                {lowStock}
+              </p>
             </div>
           </div>
         </div>
