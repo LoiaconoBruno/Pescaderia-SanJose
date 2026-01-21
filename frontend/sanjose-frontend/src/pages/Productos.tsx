@@ -224,11 +224,10 @@ export default function Productos() {
                             #{p.codigo}
                           </span>
                           <span
-                            className={`px-2 py-0.5 rounded text-xs font-bold ${
-                              p.stock > 10
+                            className={`px-2 py-0.5 rounded text-xs font-bold ${p.stock > 10
                                 ? "bg-green-100 text-green-700"
                                 : "bg-amber-100 text-amber-700"
-                            }`}
+                              }`}
                           >
                             {p.stock > 10 ? "✓" : "⚠"}
                           </span>
@@ -242,9 +241,8 @@ export default function Productos() {
                       <div>
                         <span className="text-slate-600">Stock: </span>
                         <span
-                          className={`font-bold ${
-                            p.stock < 10 ? "text-amber-600" : "text-slate-900"
-                          }`}
+                          className={`font-bold ${p.stock < 10 ? "text-amber-600" : "text-slate-900"
+                            }`}
                         >
                           {p.stock}
                         </span>
@@ -272,10 +270,7 @@ export default function Productos() {
                         Stock
                       </th>
                       <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs sm:text-sm font-bold">
-                        Unidad
-                      </th>
-                      <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs sm:text-sm font-bold">
-                        Estado
+                        Unidades
                       </th>
                     </tr>
                   </thead>
@@ -290,27 +285,15 @@ export default function Productos() {
                         </td>
                         <td className="px-4 lg:px-6 py-3 lg:py-4">
                           <span
-                            className={`font-bold text-sm ${
-                              p.stock < 10 ? "text-amber-600" : ""
-                            }`}
+                            className={`font-bold text-sm ${p.stock < 10 ? "text-amber-600" : ""
+                              }`}
                           >
                             {p.stock}
                           </span>
                         </td>
                         <td className="px-4 lg:px-6 py-3 lg:py-4">
-                          <span className="px-2 lg:px-3 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700">
+                          <span className="px-2 lg:px-3 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 capitalize">
                             {p.tipo_cantidad || "unidades"}
-                          </span>
-                        </td>
-                        <td className="px-4 lg:px-6 py-3 lg:py-4">
-                          <span
-                            className={`px-2 lg:px-3 py-1 rounded text-xs font-bold ${
-                              p.stock > 10
-                                ? "bg-green-100 text-green-700"
-                                : "bg-amber-100 text-amber-700"
-                            }`}
-                          >
-                            {p.stock > 10 ? "✓ Normal" : "⚠ Bajo"}
                           </span>
                         </td>
                       </tr>

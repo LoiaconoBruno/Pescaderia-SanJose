@@ -279,26 +279,27 @@ export default function Entradas() {
   const globalError = formError || movimientosError || productosError;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-3 sm:p-6 lg:p-8">
-      <main className="max-w-7xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 sm:mb-8">
-          <div>
-            <div className="flex items-center gap-2 sm:gap-3 mb-2">
-              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-lg">
-                <TrendingUp className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+      <main className="max-w-7xl mx-auto p-3 sm:p-6 lg:p-8">
+        {/* Header */}
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2.5 rounded-xl shadow-lg shrink-0">
+              <TrendingUp className="w-5 h-5 md:w-7 md:h-7 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                 Entradas
               </h3>
+              <p className="text-slate-600 text-sm md:text-base mt-1">
+                Registra facturas con múltiples productos
+              </p>
             </div>
-            <p className="text-slate-600 text-sm sm:text-base ml-9 sm:ml-16">
-              Registra facturas con múltiples productos
-            </p>
           </div>
 
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105 font-medium text-sm sm:text-base w-full sm:w-auto"
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-5 py-3.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95 font-medium"
             disabled={productosLoading}
           >
             <Plus size={20} />
@@ -372,18 +373,16 @@ export default function Entradas() {
                 return (
                   <div
                     key={key}
-                    className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${
-                      factura.estado
+                    className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${factura.estado
                         ? "border-green-200"
                         : "border-red-200 opacity-60"
-                    }`}
+                      }`}
                   >
                     <div
-                      className={`p-3 sm:p-4 lg:p-6 ${
-                        factura.estado
+                      className={`p-3 sm:p-4 lg:p-6 ${factura.estado
                           ? "bg-gradient-to-r from-green-50 to-emerald-50"
                           : "bg-gray-100"
-                      } border-b`}
+                        } border-b`}
                     >
                       <div className="flex flex-col gap-3 sm:hidden">
                         <div className="flex items-center justify-between">
@@ -394,11 +393,10 @@ export default function Entradas() {
                               </span>
                             </div>
                             <div
-                              className={`px-2 py-1 rounded-lg text-xs font-bold ${
-                                factura.estado
+                              className={`px-2 py-1 rounded-lg text-xs font-bold ${factura.estado
                                   ? "bg-green-100 text-green-700"
                                   : "bg-red-100 text-red-700"
-                              }`}
+                                }`}
                             >
                               {factura.estado ? "✓" : "✗"}
                             </div>
@@ -438,11 +436,10 @@ export default function Entradas() {
                             )}
                           </div>
                           <div
-                            className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${
-                              factura.estado
+                            className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${factura.estado
                                 ? "bg-green-100 text-green-700"
                                 : "bg-red-100 text-red-700"
-                            }`}
+                              }`}
                           >
                             {factura.estado ? "✓ Activa" : "✗ Anulada"}
                           </div>
