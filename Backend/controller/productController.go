@@ -17,13 +17,11 @@ func CreateProduct(c *fiber.Ctx) error {
 			Error: "Solicitud inválida",
 		})
 	}
-
 	if req.Descripcion == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(models.ErrorResponse{
 			Error: "La descripción es obligatoria",
 		})
 	}
-
 	// Verificar que el código no exista
 	var existente models.Product
 	if err := database.DB.Where("codigo = ?", req.Codigo).First(&existente).Error; err == nil {
@@ -31,19 +29,17 @@ func CreateProduct(c *fiber.Ctx) error {
 			Error: "El código de producto ya existe",
 		})
 	}
-
 	producto := models.Product{
-		Codigo:      req.Codigo,
-		Descripcion: req.Descripcion,
-		Stock:       req.Stock,
+		Codigo:       req.Codigo,
+		Descripcion:  req.Descripcion,
+		Stock:        req.Stock,
+		TipoCantidad: req.TipoCantidad, // ✅ AGREGADO
 	}
-
 	if err := database.DB.Create(&producto).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
 			Error: "Error al crear el producto",
 		})
 	}
-
 	return c.Status(fiber.StatusCreated).JSON(producto)
 }
 
