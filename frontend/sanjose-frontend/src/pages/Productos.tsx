@@ -126,8 +126,6 @@ export default function Productos() {
     );
   }, [productos, searchTerm]);
 
-  const lowStock = productos.filter((p) => p.stock < 10).length;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <main className="max-w-7xl mx-auto p-3 sm:p-6 lg:p-8">
@@ -155,7 +153,6 @@ export default function Productos() {
             Agregar Producto
           </button>
         </div>
-
         {/* Mensajes */}
         {successMessage && (
           <div className="bg-green-50 border-l-4 border-green-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex gap-2 sm:gap-3">
@@ -174,23 +171,6 @@ export default function Productos() {
             </p>
           </div>
         )}
-
-        {/* Stats */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border border-amber-100 p-4 sm:p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="bg-amber-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
-              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
-            </div>
-            <div className="text-right">
-              <p className="text-slate-600 text-xs sm:text-sm font-medium mb-1">
-                Stock Bajo
-              </p>
-              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-amber-600">
-                {lowStock}
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Search */}
         <div className="mb-4 sm:mb-6 relative">
