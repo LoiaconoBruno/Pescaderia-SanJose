@@ -7,22 +7,7 @@ import {
   CheckCircle,
   X,
 } from "lucide-react";
-
-// Simulación de API
-const api = {
-  get: async (_url: string) => {
-    const stored = localStorage.getItem('productos');
-    return { data: stored ? JSON.parse(stored) : [] };
-  },
-  post: async (_url: string, data: any) => {
-    const stored = localStorage.getItem('productos');
-    const productos = stored ? JSON.parse(stored) : [];
-    const newProducto = { ...data, id: Date.now() };
-    productos.push(newProducto);
-    localStorage.setItem('productos', JSON.stringify(productos));
-    return { data: newProducto };
-  }
-};
+import api from "../lib/axios"; // ✅ Importar tu configuración de axios real
 
 type Producto = {
   id: number;
@@ -73,7 +58,7 @@ export default function Productos() {
     setLoading(true);
     setErrorMessage("");
     try {
-      const res = await api.get("/productos");
+      const res = await api.get("/productos"); // ✅ Llamada real a tu API
       setProductos(res.data || []);
     } catch (err: any) {
       const msg =
@@ -137,7 +122,7 @@ export default function Productos() {
     return productos.filter(
       (p) =>
         p.codigo.toString().includes(term) ||
-        p.descripcion.toLowerCase().includes(term)
+        p.descripcion.toLowerCase().includes(term),
     );
   }, [productos, searchTerm]);
 
@@ -259,21 +244,30 @@ export default function Productos() {
         {/* Tabla / Cards */}
         <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden">
           {loading ? (
-            <div className="p-8 sm:p-12 text-center text-slate-600">
-              Cargando productos...
+            <div className="p-8 sm:p-12 text-center">
+              <div className="flex items-center justify-center gap-3">
+                <div className="animate-spin h-6 w-6 border-2 border-slate-400 border-t-transparent rounded-full" />
+                <p className="text-slate-700 font-medium">
+                  Cargando productos...
+                </p>
+              </div>
             </div>
           ) : filteredProductos.length === 0 ? (
             <div className="p-8 sm:p-12 text-center">
               <Package className="w-12 h-12 sm:w-16 sm:h-16 text-slate-300 mx-auto mb-4" />
               <p className="text-slate-500 text-base sm:text-lg mb-4">
-                No hay productos registrados
+                {searchTerm
+                  ? "No se encontraron productos"
+                  : "No hay productos registrados"}
               </p>
-              <button
-                onClick={() => setShowModal(true)}
-                className="text-blue-600 hover:text-blue-700 font-semibold text-sm sm:text-base"
-              >
-                Agregar primer producto
-              </button>
+              {!searchTerm && (
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="text-blue-600 hover:text-blue-700 font-semibold text-sm sm:text-base"
+                >
+                  Agregar primer producto
+                </button>
+              )}
             </div>
           ) : (
             <>
@@ -288,23 +282,27 @@ export default function Productos() {
                             #{p.codigo}
                           </span>
                           <span
-                            className={`px-2 py-0.5 rounded text-xs font-bold ${p.stock > 10
+                            className={`px-2 py-0.5 rounded text-xs font-bold ${
+                              p.stock > 10
                                 ? "bg-green-100 text-green-700"
                                 : "bg-amber-100 text-amber-700"
-                              }`}
+                            }`}
                           >
                             {p.stock > 10 ? "✓" : "⚠"}
                           </span>
                         </div>
-                        <p className="font-semibold text-slate-900">{p.descripcion}</p>
+                        <p className="font-semibold text-slate-900">
+                          {p.descripcion}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                       <div>
                         <span className="text-slate-600">Stock: </span>
                         <span
-                          className={`font-bold ${p.stock < 10 ? "text-amber-600" : "text-slate-900"
-                            }`}
+                          className={`font-bold ${
+                            p.stock < 10 ? "text-amber-600" : "text-slate-900"
+                          }`}
                         >
                           {p.stock}
                         </span>
@@ -350,8 +348,9 @@ export default function Productos() {
                         </td>
                         <td className="px-4 lg:px-6 py-3 lg:py-4">
                           <span
-                            className={`font-bold text-sm ${p.stock < 10 ? "text-amber-600" : ""
-                              }`}
+                            className={`font-bold text-sm ${
+                              p.stock < 10 ? "text-amber-600" : ""
+                            }`}
                           >
                             {p.stock}
                           </span>
@@ -363,10 +362,11 @@ export default function Productos() {
                         </td>
                         <td className="px-4 lg:px-6 py-3 lg:py-4">
                           <span
-                            className={`px-2 lg:px-3 py-1 rounded text-xs font-bold ${p.stock > 10
+                            className={`px-2 lg:px-3 py-1 rounded text-xs font-bold ${
+                              p.stock > 10
                                 ? "bg-green-100 text-green-700"
                                 : "bg-amber-100 text-amber-700"
-                              }`}
+                            }`}
                           >
                             {p.stock > 10 ? "✓ Normal" : "⚠ Bajo"}
                           </span>
@@ -390,7 +390,7 @@ export default function Productos() {
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="p-1.5 hover:bg-white/50 rounded-lg transition sm:hidden"
+                  className="p-1.5 hover:bg-white/50 rounded-lg transition"
                 >
                   <X className="w-5 h-5 text-slate-600" />
                 </button>

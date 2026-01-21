@@ -52,14 +52,18 @@ export default function Entradas() {
 
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editingMovimiento, setEditingMovimiento] = useState<Movimiento | null>(null);
+  const [editingMovimiento, setEditingMovimiento] = useState<Movimiento | null>(
+    null,
+  );
   const [editCantidad, setEditCantidad] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [formError, setFormError] = useState("");
-  const [expandedFacturas, setExpandedFacturas] = useState<Set<string>>(new Set());
+  const [expandedFacturas, setExpandedFacturas] = useState<Set<string>>(
+    new Set(),
+  );
   const [mostrarTodas, setMostrarTodas] = useState(false);
 
   const initialForm: FormData = {
@@ -83,7 +87,10 @@ export default function Entradas() {
       const res = await api.get<Producto[]>("/productos");
       setProductos(res.data || []);
     } catch (err: any) {
-      const msg = err?.response?.data?.error || err?.message || "Error al cargar productos";
+      const msg =
+        err?.response?.data?.error ||
+        err?.message ||
+        "Error al cargar productos";
       setProductosError(msg);
     } finally {
       setProductosLoading(false);
@@ -96,7 +103,7 @@ export default function Entradas() {
 
   const entradas = useMemo(
     () => movimientos.filter((m) => m.tipo === "ENTRADA"),
-    [movimientos]
+    [movimientos],
   );
 
   const facturasAgrupadas = useMemo(() => {
@@ -124,7 +131,7 @@ export default function Entradas() {
     });
 
     return Array.from(grupos.values()).sort(
-      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
     );
   }, [entradas]);
 
@@ -136,8 +143,8 @@ export default function Entradas() {
         f.productos.some(
           (p: any) =>
             p.producto?.codigo?.toString().includes(term) ||
-            p.producto?.descripcion?.toLowerCase().includes(term)
-        )
+            p.producto?.descripcion?.toLowerCase().includes(term),
+        ),
     );
   }, [facturasAgrupadas, searchTerm]);
 
@@ -224,7 +231,10 @@ export default function Entradas() {
 
     try {
       const movsFactura = entradas.filter(
-        (m) => m.numero_factura === numeroFactura && m.fecha === fecha && m.estado === true
+        (m) =>
+          m.numero_factura === numeroFactura &&
+          m.fecha === fecha &&
+          m.estado === true,
       );
 
       for (const m of movsFactura) {
@@ -301,7 +311,9 @@ export default function Entradas() {
             <div className="bg-green-100 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
               <CheckCircle className="text-green-600 w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <p className="text-green-700 font-medium text-sm sm:text-base">{successMessage}</p>
+            <p className="text-green-700 font-medium text-sm sm:text-base">
+              {successMessage}
+            </p>
           </div>
         )}
 
@@ -310,7 +322,9 @@ export default function Entradas() {
             <div className="bg-red-100 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
               <AlertCircle className="text-red-600 w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <p className="text-red-700 font-medium text-sm sm:text-base">{globalError}</p>
+            <p className="text-red-700 font-medium text-sm sm:text-base">
+              {globalError}
+            </p>
           </div>
         )}
 
@@ -337,7 +351,9 @@ export default function Entradas() {
         {filteredFacturas.length === 0 ? (
           <div className="bg-white/80 rounded-xl sm:rounded-2xl shadow-lg p-8 sm:p-12 text-center">
             <Package className="w-12 h-12 sm:w-16 sm:h-16 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 text-base sm:text-lg">No hay facturas registradas</p>
+            <p className="text-slate-500 text-base sm:text-lg">
+              No hay facturas registradas
+            </p>
             <button
               onClick={() => setShowModal(true)}
               className="mt-4 text-green-600 hover:text-green-700 font-semibold text-sm sm:text-base"
@@ -356,14 +372,18 @@ export default function Entradas() {
                 return (
                   <div
                     key={key}
-                    className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${factura.estado ? "border-green-200" : "border-red-200 opacity-60"
-                      }`}
+                    className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${
+                      factura.estado
+                        ? "border-green-200"
+                        : "border-red-200 opacity-60"
+                    }`}
                   >
                     <div
-                      className={`p-3 sm:p-4 lg:p-6 ${factura.estado
-                        ? "bg-gradient-to-r from-green-50 to-emerald-50"
-                        : "bg-gray-100"
-                        } border-b`}
+                      className={`p-3 sm:p-4 lg:p-6 ${
+                        factura.estado
+                          ? "bg-gradient-to-r from-green-50 to-emerald-50"
+                          : "bg-gray-100"
+                      } border-b`}
                     >
                       <div className="flex flex-col gap-3 sm:hidden">
                         <div className="flex items-center justify-between">
@@ -374,10 +394,11 @@ export default function Entradas() {
                               </span>
                             </div>
                             <div
-                              className={`px-2 py-1 rounded-lg text-xs font-bold ${factura.estado
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                                }`}
+                              className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                                factura.estado
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
                             >
                               {factura.estado ? "✓" : "✗"}
                             </div>
@@ -412,13 +433,16 @@ export default function Entradas() {
                           </div>
                           <div className="text-slate-600 flex items-center gap-2 text-sm lg:text-base">
                             <Calendar className="w-4 h-4" />
-                            {new Date(factura.fecha).toLocaleDateString("es-AR")}
+                            {new Date(factura.fecha).toLocaleDateString(
+                              "es-AR",
+                            )}
                           </div>
                           <div
-                            className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${factura.estado
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                              }`}
+                            className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${
+                              factura.estado
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
                           >
                             {factura.estado ? "✓ Activa" : "✗ Anulada"}
                           </div>
@@ -427,7 +451,10 @@ export default function Entradas() {
                         {factura.estado && (
                           <button
                             onClick={() =>
-                              handleAnularFactura(factura.numero_factura, factura.fecha)
+                              handleAnularFactura(
+                                factura.numero_factura,
+                                factura.fecha,
+                              )
                             }
                             className="flex items-center gap-2 px-3 lg:px-4 py-1.5 lg:py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg lg:rounded-xl transition font-medium text-sm lg:text-base"
                             disabled={isSubmitting}
@@ -443,7 +470,10 @@ export default function Entradas() {
                       <>
                         <div className="sm:hidden divide-y">
                           {factura.productos.map((mov: Movimiento) => (
-                            <div key={mov.id} className="p-3 hover:bg-green-50/30">
+                            <div
+                              key={mov.id}
+                              className="p-3 hover:bg-green-50/30"
+                            >
                               <div className="flex justify-between items-start mb-2">
                                 <div className="flex-1">
                                   <p className="font-mono text-xs text-slate-500 mb-1">
@@ -494,7 +524,10 @@ export default function Entradas() {
                             </thead>
                             <tbody>
                               {factura.productos.map((mov: Movimiento) => (
-                                <tr key={mov.id} className="border-b hover:bg-green-50/30">
+                                <tr
+                                  key={mov.id}
+                                  className="border-b hover:bg-green-50/30"
+                                >
                                   <td className="px-4 lg:px-6 py-3 lg:py-4 font-mono text-sm">
                                     {mov.producto?.codigo}
                                   </td>
@@ -510,7 +543,9 @@ export default function Entradas() {
                                   {factura.estado && (
                                     <td className="px-4 lg:px-6 py-3 lg:py-4 text-right">
                                       <button
-                                        onClick={() => handleEditarProducto(mov)}
+                                        onClick={() =>
+                                          handleEditarProducto(mov)
+                                        }
                                         className="p-2 hover:bg-blue-100 rounded-lg lg:rounded-xl transition"
                                       >
                                         <Edit2 className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" />
@@ -527,7 +562,10 @@ export default function Entradas() {
                           <div className="sm:hidden p-3 border-t">
                             <button
                               onClick={() =>
-                                handleAnularFactura(factura.numero_factura, factura.fecha)
+                                handleAnularFactura(
+                                  factura.numero_factura,
+                                  factura.fecha,
+                                )
                               }
                               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition font-medium text-sm"
                               disabled={isSubmitting}
@@ -563,7 +601,9 @@ export default function Entradas() {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-green-50 to-emerald-50 sticky top-0 z-10 flex justify-between items-center">
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">Nueva Factura</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                  Nueva Factura
+                </h3>
                 <button
                   onClick={() => setShowModal(false)}
                   className="p-2 hover:bg-white/50 rounded-lg transition"
@@ -572,11 +612,16 @@ export default function Entradas() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              <form
+                onSubmit={handleSubmit}
+                className="p-4 sm:p-6 space-y-4 sm:space-y-6"
+              >
                 {formError && (
                   <div className="bg-red-50 border-l-4 border-red-500 rounded-lg sm:rounded-xl p-3 flex gap-2">
                     <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5 w-5 h-5" />
-                    <p className="text-red-700 text-sm font-medium">{formError}</p>
+                    <p className="text-red-700 text-sm font-medium">
+                      {formError}
+                    </p>
                   </div>
                 )}
 
@@ -600,12 +645,16 @@ export default function Entradas() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Fecha</label>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">
+                      Fecha
+                    </label>
                     <input
                       type="date"
                       required
                       value={formData.fecha}
-                      onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, fecha: e.target.value })
+                      }
                       className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none text-sm sm:text-base"
                     />
                   </div>
@@ -619,7 +668,9 @@ export default function Entradas() {
                     type="text"
                     required
                     value={formData.descripcion}
-                    onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, descripcion: e.target.value })
+                    }
                     className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none text-sm sm:text-base"
                     placeholder="Compra pescado fresco"
                   />
@@ -627,7 +678,9 @@ export default function Entradas() {
 
                 <div>
                   <div className="flex justify-between items-center mb-3">
-                    <label className="text-sm font-bold text-slate-700">Productos</label>
+                    <label className="text-sm font-bold text-slate-700">
+                      Productos
+                    </label>
                     <button
                       type="button"
                       onClick={agregarProducto}
@@ -649,13 +702,17 @@ export default function Entradas() {
                             value={prod.producto_id}
                             onChange={(e) => {
                               const nuevos = [...formData.productos];
-                              nuevos[index].producto_id = parseInt(e.target.value);
+                              nuevos[index].producto_id = parseInt(
+                                e.target.value,
+                              );
                               setFormData({ ...formData, productos: nuevos });
                             }}
                             className="w-full px-3 sm:px-4 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none text-sm sm:text-base"
                           >
                             <option value={0}>
-                              {productosLoading ? "Cargando..." : "Seleccionar producto"}
+                              {productosLoading
+                                ? "Cargando..."
+                                : "Seleccionar producto"}
                             </option>
                             {productos.map((p) => (
                               <option key={p.id} value={p.id}>
@@ -673,7 +730,8 @@ export default function Entradas() {
                             value={prod.cantidad || ""}
                             onChange={(e) => {
                               const nuevos = [...formData.productos];
-                              nuevos[index].cantidad = parseInt(e.target.value) || 0;
+                              nuevos[index].cantidad =
+                                parseInt(e.target.value) || 0;
                               setFormData({ ...formData, productos: nuevos });
                             }}
                             className="flex-1 sm:w-32 px-3 sm:px-4 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500/20 focus:border-green-500 outline-none text-sm sm:text-base"
@@ -710,7 +768,11 @@ export default function Entradas() {
                     type="submit"
                     disabled={isSubmitting || productos.length === 0}
                     className="flex-1 px-4 py-2.5 sm:py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg sm:rounded-xl hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 font-semibold shadow-lg text-sm sm:text-base"
-                    title={productos.length === 0 ? "Primero cargá productos" : "Registrar"}
+                    title={
+                      productos.length === 0
+                        ? "Primero cargá productos"
+                        : "Registrar"
+                    }
                   >
                     {isSubmitting ? "Guardando..." : "Registrar"}
                   </button>
@@ -724,7 +786,9 @@ export default function Entradas() {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full">
               <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900">Editar Cantidad</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+                  Editar Cantidad
+                </h3>
               </div>
               <div className="p-4 sm:p-6 space-y-4">
                 <div>
@@ -741,7 +805,9 @@ export default function Entradas() {
                     type="number"
                     min={1}
                     value={editCantidad}
-                    onChange={(e) => setEditCantidad(parseInt(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setEditCantidad(parseInt(e.target.value) || 0)
+                    }
                     className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm sm:text-base"
                   />
                 </div>
