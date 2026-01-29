@@ -9,6 +9,17 @@ import (
 	"sanJoseProyect/models"
 )
 
+// Función auxiliar para parsear fecha sin zona horaria
+func parseLocalDate(dateStr string) (time.Time, error) {
+	// Parse en UTC pero luego la tratamos como fecha sin hora
+	t, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+	// Crear un nuevo time con solo año, mes, día (sin zona horaria específica)
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC), nil
+}
+
 func CreateInMovement(c *fiber.Ctx) error {
 	req := new(models.CreateInMovementRequest)
 
@@ -16,7 +27,7 @@ func CreateInMovement(c *fiber.Ctx) error {
 		return c.Status(400).JSON(models.ErrorResponse{Error: "Solicitud inválida"})
 	}
 
-	fecha, err := time.Parse("2006-01-02", req.Fecha)
+	fecha, err := parseLocalDate(req.Fecha)
 	if err != nil {
 		return c.Status(400).JSON(models.ErrorResponse{Error: "Formato de fecha inválido"})
 	}
@@ -57,7 +68,7 @@ func CreateOutMovement(c *fiber.Ctx) error {
 		return c.Status(400).JSON(models.ErrorResponse{Error: "Solicitud inválida"})
 	}
 
-	fecha, err := time.Parse("2006-01-02", req.Fecha)
+	fecha, err := parseLocalDate(req.Fecha)
 	if err != nil {
 		return c.Status(400).JSON(models.ErrorResponse{Error: "Formato de fecha inválido"})
 	}
