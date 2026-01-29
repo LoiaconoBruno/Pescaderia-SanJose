@@ -111,7 +111,8 @@ export default function Entradas() {
 
     entradas.forEach((mov) => {
       if (!mov.numero_factura) return;
-      const key = `${mov.numero_factura}-${mov.fecha}`;
+      // Incluir el estado en la clave para que facturas con mismo número pero diferente estado se muestren separadas
+      const key = `${mov.numero_factura}-${mov.fecha}-${mov.estado}`;
 
       if (!grupos.has(key)) {
         grupos.set(key, {
@@ -124,10 +125,6 @@ export default function Entradas() {
       }
 
       grupos.get(key).productos.push(mov);
-
-      if (mov.estado === false) {
-        grupos.get(key).estado = false;
-      }
     });
 
     return Array.from(grupos.values()).sort(
@@ -225,18 +222,37 @@ export default function Entradas() {
   };
 
   const handleAnularFactura = async (numeroFactura: number, fecha: string) => {
+    // Verificar si hay salidas asociadas a productos de esta factura
+    const movsFactura = entradas.filter(
+      (m) =>
+        m.numero_factura === numeroFactura &&
+        m.fecha === fecha &&
+        m.estado === true,
+    );
+
+    // Obtener IDs de productos de esta factura
+    const productosFactura = movsFactura.map(m => m.producto_id);
+
+    // Verificar si hay salidas de estos productos en la misma fecha
+    const tieneSalidas = movimientos.some(
+      (m) =>
+        m.tipo === "SALIDA" &&
+        m.numero_factura === numeroFactura &&
+        m.fecha === fecha &&
+        productosFactura.includes(m.producto_id) &&
+        m.estado === true
+    );
+
+    if (tieneSalidas) {
+      setFormError("No se puede anular esta factura porque tiene salidas asociadas");
+      return;
+    }
+
     if (!confirm("¿Anular toda la factura?")) return;
     setFormError("");
     setIsSubmitting(true);
 
     try {
-      const movsFactura = entradas.filter(
-        (m) =>
-          m.numero_factura === numeroFactura &&
-          m.fecha === fecha &&
-          m.estado === true,
-      );
-
       for (const m of movsFactura) {
         await anularMovimiento(m.id);
       }
@@ -367,21 +383,21 @@ export default function Entradas() {
           <>
             <div className="space-y-3 sm:space-y-4">
               {facturasAMostrar.map((factura: any) => {
-                const key = `${factura.numero_factura}-${factura.fecha}`;
+                const key = `${factura.numero_factura}-${factura.fecha}-${factura.estado}`;
                 const isExpanded = expandedFacturas.has(key);
 
                 return (
                   <div
                     key={key}
                     className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${factura.estado
-                        ? "border-green-200"
-                        : "border-red-200 opacity-60"
+                      ? "border-green-200"
+                      : "border-red-200 opacity-60"
                       }`}
                   >
                     <div
                       className={`p-3 sm:p-4 lg:p-6 ${factura.estado
-                          ? "bg-gradient-to-r from-green-50 to-emerald-50"
-                          : "bg-gray-100"
+                        ? "bg-gradient-to-r from-green-50 to-emerald-50"
+                        : "bg-gray-100"
                         } border-b`}
                     >
                       <div className="flex flex-col gap-3 sm:hidden">
@@ -394,8 +410,8 @@ export default function Entradas() {
                             </div>
                             <div
                               className={`px-2 py-1 rounded-lg text-xs font-bold ${factura.estado
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-red-100 text-red-700"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
                                 }`}
                             >
                               {factura.estado ? "✓" : "✗"}
@@ -437,8 +453,8 @@ export default function Entradas() {
                           </div>
                           <div
                             className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${factura.estado
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
                               }`}
                           >
                             {factura.estado ? "✓ Activa" : "✗ Anulada"}
