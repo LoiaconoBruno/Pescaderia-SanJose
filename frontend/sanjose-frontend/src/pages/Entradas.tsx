@@ -66,9 +66,17 @@ export default function Entradas() {
   );
   const [mostrarTodas, setMostrarTodas] = useState(false);
 
+  const getLocalDateString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const initialForm: FormData = {
     numero_factura: 0,
-    fecha: new Date().toISOString().split("T")[0],
+    fecha: getLocalDateString(),
     descripcion: "",
     productos: [{ producto_id: 0, cantidad: 0 }],
   };
@@ -134,15 +142,17 @@ export default function Entradas() {
 
   const filteredFacturas = useMemo(() => {
     const term = searchTerm.toLowerCase();
-    return facturasAgrupadas.filter(
-      (f: any) =>
-        f.numero_factura.toString().includes(term) ||
-        f.productos.some(
-          (p: any) =>
-            p.producto?.codigo?.toString().includes(term) ||
-            p.producto?.descripcion?.toLowerCase().includes(term),
-        ),
-    );
+    return facturasAgrupadas
+      .filter((f: any) => f.estado === true) // Solo mostrar facturas activas
+      .filter(
+        (f: any) =>
+          f.numero_factura.toString().includes(term) ||
+          f.productos.some(
+            (p: any) =>
+              p.producto?.codigo?.toString().includes(term) ||
+              p.producto?.descripcion?.toLowerCase().includes(term),
+          ),
+      );
   }, [facturasAgrupadas, searchTerm]);
 
   const facturasAMostrar = useMemo(() => {
@@ -231,7 +241,7 @@ export default function Entradas() {
     );
 
     // Obtener IDs de productos de esta factura
-    const productosFactura = movsFactura.map(m => m.producto_id);
+    const productosFactura = movsFactura.map((m) => m.producto_id);
 
     // Verificar si hay salidas de estos productos en la misma fecha
     const tieneSalidas = movimientos.some(
@@ -240,11 +250,13 @@ export default function Entradas() {
         m.numero_factura === numeroFactura &&
         m.fecha === fecha &&
         productosFactura.includes(m.producto_id) &&
-        m.estado === true
+        m.estado === true,
     );
 
     if (tieneSalidas) {
-      setFormError("No se puede anular esta factura porque tiene salidas asociadas");
+      setFormError(
+        "No se puede anular esta factura porque tiene salidas asociadas",
+      );
       return;
     }
 
@@ -389,16 +401,18 @@ export default function Entradas() {
                 return (
                   <div
                     key={key}
-                    className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${factura.estado
-                      ? "border-green-200"
-                      : "border-red-200 opacity-60"
-                      }`}
+                    className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${
+                      factura.estado
+                        ? "border-green-200"
+                        : "border-red-200 opacity-60"
+                    }`}
                   >
                     <div
-                      className={`p-3 sm:p-4 lg:p-6 ${factura.estado
-                        ? "bg-gradient-to-r from-green-50 to-emerald-50"
-                        : "bg-gray-100"
-                        } border-b`}
+                      className={`p-3 sm:p-4 lg:p-6 ${
+                        factura.estado
+                          ? "bg-gradient-to-r from-green-50 to-emerald-50"
+                          : "bg-gray-100"
+                      } border-b`}
                     >
                       <div className="flex flex-col gap-3 sm:hidden">
                         <div className="flex items-center justify-between">
@@ -409,10 +423,11 @@ export default function Entradas() {
                               </span>
                             </div>
                             <div
-                              className={`px-2 py-1 rounded-lg text-xs font-bold ${factura.estado
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                                }`}
+                              className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                                factura.estado
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
                             >
                               {factura.estado ? "✓" : "✗"}
                             </div>
@@ -452,10 +467,11 @@ export default function Entradas() {
                             )}
                           </div>
                           <div
-                            className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${factura.estado
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                              }`}
+                            className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${
+                              factura.estado
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
                           >
                             {factura.estado ? "✓ Activa" : "✗ Anulada"}
                           </div>
