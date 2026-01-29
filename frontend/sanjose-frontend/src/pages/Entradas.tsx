@@ -35,6 +35,11 @@ interface FormData {
   productos: ProductoEntrada[];
 }
 
+const formatFecha = (fecha: string) => {
+  const [y, m, d] = fecha.split("-");
+  return `${d}/${m}/${y}`;
+};
+
 export default function Entradas() {
   const {
     movimientos,
@@ -136,7 +141,7 @@ export default function Entradas() {
     });
 
     return Array.from(grupos.values()).sort(
-      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+      (a, b) => b.fecha.localeCompare(a.fecha),
     );
   }, [entradas]);
 
@@ -401,18 +406,16 @@ export default function Entradas() {
                 return (
                   <div
                     key={key}
-                    className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${
-                      factura.estado
+                    className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${factura.estado
                         ? "border-green-200"
                         : "border-red-200 opacity-60"
-                    }`}
+                      }`}
                   >
                     <div
-                      className={`p-3 sm:p-4 lg:p-6 ${
-                        factura.estado
+                      className={`p-3 sm:p-4 lg:p-6 ${factura.estado
                           ? "bg-gradient-to-r from-green-50 to-emerald-50"
                           : "bg-gray-100"
-                      } border-b`}
+                        } border-b`}
                     >
                       <div className="flex flex-col gap-3 sm:hidden">
                         <div className="flex items-center justify-between">
@@ -423,11 +426,10 @@ export default function Entradas() {
                               </span>
                             </div>
                             <div
-                              className={`px-2 py-1 rounded-lg text-xs font-bold ${
-                                factura.estado
+                              className={`px-2 py-1 rounded-lg text-xs font-bold ${factura.estado
                                   ? "bg-green-100 text-green-700"
                                   : "bg-red-100 text-red-700"
-                              }`}
+                                }`}
                             >
                               {factura.estado ? "✓" : "✗"}
                             </div>
@@ -445,7 +447,7 @@ export default function Entradas() {
                         </div>
                         <div className="flex items-center gap-2 text-slate-600 text-sm">
                           <Calendar className="w-4 h-4" />
-                          {new Date(factura.fecha).toLocaleDateString("es-AR")}
+                          {formatFecha(factura.fecha)}
                         </div>
                         <div className="text-slate-600 text-sm">
                           {factura.productos.length} producto
@@ -462,16 +464,13 @@ export default function Entradas() {
                           </div>
                           <div className="text-slate-600 flex items-center gap-2 text-sm lg:text-base">
                             <Calendar className="w-4 h-4" />
-                            {new Date(factura.fecha).toLocaleDateString(
-                              "es-AR",
-                            )}
+                            {formatFecha(factura.fecha)}
                           </div>
                           <div
-                            className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${
-                              factura.estado
+                            className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${factura.estado
                                 ? "bg-green-100 text-green-700"
                                 : "bg-red-100 text-red-700"
-                            }`}
+                              }`}
                           >
                             {factura.estado ? "✓ Activa" : "✗ Anulada"}
                           </div>
