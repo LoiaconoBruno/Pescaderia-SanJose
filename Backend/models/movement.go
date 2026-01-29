@@ -13,7 +13,8 @@ type CustomDate struct {
 
 // MarshalJSON formatea la fecha como "2006-01-02"
 func (cd CustomDate) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + cd.Time.Format("2006-01-02") + `"`), nil
+	// Asegurarse de que la fecha se formatee en la zona horaria local
+	return []byte(`"` + cd.Time.In(time.Local).Format("2006-01-02") + `"`), nil
 }
 
 // UnmarshalJSON parsea la fecha desde "2006-01-02"
@@ -24,7 +25,8 @@ func (cd *CustomDate) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	cd.Time = t
+	// Establecer la fecha en la zona horaria local
+	cd.Time = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
 	return nil
 }
 
@@ -46,28 +48,29 @@ func (cd *CustomDate) Scan(value interface{}) error {
 
 	switch v := value.(type) {
 	case time.Time:
-		cd.Time = v
+		// Normalizar a la zona horaria local, hora 00:00:00
+		cd.Time = time.Date(v.Year(), v.Month(), v.Day(), 0, 0, 0, 0, time.Local)
 		return nil
 	case string:
 		t, err := time.Parse("2006-01-02", v)
 		if err != nil {
 			return err
 		}
-		cd.Time = t
+		cd.Time = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
 		return nil
 	case []byte:
 		t, err := time.Parse("2006-01-02", string(v))
 		if err != nil {
 			return err
 		}
-		cd.Time = t
+		cd.Time = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
 		return nil
 	default:
 		return fmt.Errorf("no se puede convertir %T a CustomDate", value)
 	}
 }
 
-// Resto del código...
+// Movement model
 type Movement struct {
 	ID            uint       `json:"id" gorm:"primaryKey"`
 	ProductoID    uint       `json:"producto_id"`
@@ -86,6 +89,7 @@ func (Movement) TableName() string {
 	return "movimientos"
 }
 
+// Request DTOs
 type CreateInMovementRequest struct {
 	NumeroFactura int    `json:"numero_factura" validate:"required"`
 	Fecha         string `json:"fecha" validate:"required"`

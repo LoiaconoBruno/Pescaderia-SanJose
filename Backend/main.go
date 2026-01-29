@@ -4,17 +4,34 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
-
 	"sanJoseProyect/database"
 	"sanJoseProyect/models"
 	"sanJoseProyect/routes"
 )
 
 func main() {
+	// ✨ CONFIGURAR ZONA HORARIA AL INICIO
+	// Esto asegura que todas las fechas se manejen en la zona horaria correcta
+	loc, err := time.LoadLocation("America/Argentina/Buenos_Aires")
+	if err != nil {
+		// Si falla, intentar con otras ubicaciones de Argentina
+		loc, err = time.LoadLocation("America/Buenos_Aires")
+		if err != nil {
+			log.Println("⚠️  No se pudo cargar zona horaria de Argentina, usando Local")
+		} else {
+			time.Local = loc
+			log.Println("✅ Zona horaria configurada: America/Buenos_Aires")
+		}
+	} else {
+		time.Local = loc
+		log.Println("✅ Zona horaria configurada: America/Argentina/Buenos_Aires")
+	}
+
 	// Cargar variables de entorno
 	if err := godotenv.Load(); err != nil {
 		log.Println("⚠️  No se pudo cargar el archivo .env")
@@ -57,7 +74,7 @@ func main() {
 			"http://localhost:5137",
 			"https://loiaconobruno.github.io",
 			"https://mcldesarrolloweb.com",
-			"https://www.mcldesarrolloweb.com", // ✨ Agregado dominio con www
+			"https://www.mcldesarrolloweb.com",
 		}, ","),
 		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders: "Content-Type,Authorization",
@@ -69,7 +86,8 @@ func main() {
 	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"status": "ok",
+			"status":   "ok",
+			"timezone": time.Local.String(),
 		})
 	})
 

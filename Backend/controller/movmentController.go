@@ -11,13 +11,13 @@ import (
 
 // Función auxiliar para parsear fecha sin zona horaria
 func parseLocalDate(dateStr string) (time.Time, error) {
-	// Parse en UTC pero luego la tratamos como fecha sin hora
+	// Parse la fecha y usa la zona horaria local del servidor
 	t, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
 		return time.Time{}, err
 	}
-	// Crear un nuevo time con solo año, mes, día (sin zona horaria específica)
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC), nil
+	// Crear un nuevo time con solo año, mes, día en zona horaria local
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local), nil
 }
 
 func CreateInMovement(c *fiber.Ctx) error {
