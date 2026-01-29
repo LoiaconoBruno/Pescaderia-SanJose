@@ -40,7 +40,6 @@ func main() {
 		&models.Product{},
 		&models.Movement{},
 	)
-
 	log.Println("✅ Migraciones completadas")
 
 	// Inicializar Fiber
@@ -58,6 +57,7 @@ func main() {
 			"http://localhost:5137",
 			"https://loiaconobruno.github.io",
 			"https://mcldesarrolloweb.com",
+			"https://www.mcldesarrolloweb.com", // ✨ Agregado dominio con www
 		}, ","),
 		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders: "Content-Type,Authorization",
