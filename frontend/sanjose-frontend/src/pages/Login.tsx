@@ -6,20 +6,21 @@ import { useAuth } from "../context/AuthContext";
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, login, isLoading: authLoading } = useAuth();
+  const { user, login, authSubmitting } = useAuth(); // 👈 antes: isLoading
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState("");
 
+  const from =
+    ((location.state as any)?.from?.pathname as string) || "/productos";
+
   // Si ya está autenticado, ir a productos (o a la ruta original)
   useEffect(() => {
-    if (user) {
-      const from = (location.state as any)?.from?.pathname || "/productos";
-      navigate(from, { replace: true });
-    }
-  }, [user, navigate, location]);
+    if (user) navigate(from, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,9 +43,11 @@ export default function Login() {
 
     try {
       await login(email.trim(), password);
-      // La navegación se maneja automáticamente en el useEffect cuando user cambia
+      navigate(from, { replace: true }); // 🚀 navegación inmediata
     } catch (err: any) {
-      setLocalError(err.message || "Error al iniciar sesión. Verifica tus credenciales.");
+      setLocalError(
+        err.message || "Error al iniciar sesión. Verifica tus credenciales.",
+      );
     }
   };
 
@@ -65,27 +68,45 @@ export default function Login() {
                 <Fish className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
               </div>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">Pescadería San José</h1>
-            <p className="text-cyan-100 font-medium text-sm sm:text-base">Sistema de Gestión</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+              Pescadería San José
+            </h1>
+            <p className="text-cyan-100 font-medium text-sm sm:text-base">
+              Sistema de Gestión
+            </p>
             <div className="h-1 w-16 sm:w-20 bg-white/40 rounded-full mx-auto mt-2 sm:mt-3" />
           </div>
 
-          <form onSubmit={handleSubmit} className="p-5 sm:p-8 space-y-5 sm:space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            className="p-5 sm:p-8 space-y-5 sm:space-y-6"
+          >
             <div className="text-center">
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Bienvenido</h2>
-              <p className="text-slate-600 text-sm sm:text-base">Ingresa tus credenciales</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                Bienvenido
+              </h2>
+              <p className="text-slate-600 text-sm sm:text-base">
+                Ingresa tus credenciales
+              </p>
             </div>
 
             {localError && (
               <div className="bg-red-50 border-l-4 border-red-500 rounded-lg sm:rounded-xl p-3 sm:p-4 flex gap-2 sm:gap-3 animate-shake">
-                <span className="text-red-600 text-lg sm:text-xl flex-shrink-0">⚠️</span>
-                <p className="text-red-700 text-xs sm:text-sm font-medium">{localError}</p>
+                <span className="text-red-600 text-lg sm:text-xl flex-shrink-0">
+                  ⚠️
+                </span>
+                <p className="text-red-700 text-xs sm:text-sm font-medium">
+                  {localError}
+                </p>
               </div>
             )}
 
             <div className="space-y-4 sm:space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-bold text-slate-700 mb-1.5 sm:mb-2"
+                >
                   Email
                 </label>
                 <input
@@ -93,7 +114,7 @@ export default function Login() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  disabled={authLoading}
+                  disabled={authSubmitting}
                   placeholder="correo@ejemplo.com"
                   autoComplete="email"
                   className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all"
@@ -101,7 +122,10 @@ export default function Login() {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-bold text-slate-700 mb-1.5 sm:mb-2">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-bold text-slate-700 mb-1.5 sm:mb-2"
+                >
                   Contraseña
                 </label>
                 <div className="relative">
@@ -110,7 +134,7 @@ export default function Login() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    disabled={authLoading}
+                    disabled={authSubmitting}
                     placeholder="••••••••"
                     autoComplete="current-password"
                     className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pr-10 sm:pr-12 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all"
@@ -119,20 +143,26 @@ export default function Login() {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-                    disabled={authLoading}
-                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    disabled={authSubmitting}
+                    aria-label={
+                      showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                    }
                   >
-                    {showPassword ? <EyeOff size={18} className="sm:w-5 sm:h-5" /> : <Eye size={18} className="sm:w-5 sm:h-5" />}
+                    {showPassword ? (
+                      <EyeOff size={18} className="sm:w-5 sm:h-5" />
+                    ) : (
+                      <Eye size={18} className="sm:w-5 sm:h-5" />
+                    )}
                   </button>
                 </div>
               </div>
 
               <button
                 type="submit"
-                disabled={authLoading}
+                disabled={authSubmitting}
                 className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-3 sm:py-3.5 rounded-lg sm:rounded-xl flex justify-center items-center gap-2 shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all text-sm sm:text-base"
               >
-                {authLoading ? (
+                {authSubmitting ? (
                   <>
                     <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     <span>Iniciando sesión...</span>
