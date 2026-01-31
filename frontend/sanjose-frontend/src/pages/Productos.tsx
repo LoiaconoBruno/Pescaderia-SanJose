@@ -6,8 +6,11 @@ import {
   Search,
   CheckCircle,
   X,
+  Eye,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
-import api from "../lib/axios"; // ✅ Importar tu configuración de axios real
+import api from "../lib/axios";
 
 type Producto = {
   id: number;
@@ -15,6 +18,19 @@ type Producto = {
   descripcion: string;
   stock: number;
   tipo_cantidad: "unidades" | "cajas" | "kg" | string;
+};
+
+type Movimiento = {
+  id: number;
+  producto_id: number;
+  numero_factura: number;
+  fecha: string;
+  descripcion: string;
+  cantidad: number;
+  tipo: "ENTRADA" | "SALIDA";
+  estado: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 type FormData = {
@@ -29,6 +45,13 @@ export default function Productos() {
   const [loading, setLoading] = useState(true);
 
   const [showModal, setShowModal] = useState(false);
+  const [showMovimientosModal, setShowMovimientosModal] = useState(false);
+  const [selectedProducto, setSelectedProducto] = useState<Producto | null>(
+    null,
+  );
+  const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
+  const [loadingMovimientos, setLoadingMovimientos] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -58,7 +81,7 @@ export default function Productos() {
     setLoading(true);
     setErrorMessage("");
     try {
-      const res = await api.get("/productos"); // ✅ Llamada real a tu API
+      const res = await api.get("/productos");
       setProductos(res.data || []);
     } catch (err: any) {
       const msg =
@@ -70,6 +93,30 @@ export default function Productos() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const cargarMovimientos = async (productoId: number) => {
+    setLoadingMovimientos(true);
+    try {
+      const res = await api.get(`/productos/${productoId}/movimientos`);
+      setMovimientos(res.data || []);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Error cargando movimientos";
+      showError(msg);
+      setMovimientos([]);
+    } finally {
+      setLoadingMovimientos(false);
+    }
+  };
+
+  const verMovimientos = async (producto: Producto) => {
+    setSelectedProducto(producto);
+    setShowMovimientosModal(true);
+    await cargarMovimientos(producto.id);
   };
 
   useEffect(() => {
@@ -153,6 +200,7 @@ export default function Productos() {
             Agregar Producto
           </button>
         </div>
+
         {/* Mensajes */}
         {successMessage && (
           <div className="bg-green-50 border-l-4 border-green-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex gap-2 sm:gap-3">
@@ -224,10 +272,11 @@ export default function Productos() {
                             #{p.codigo}
                           </span>
                           <span
-                            className={`px-2 py-0.5 rounded text-xs font-bold ${p.stock > 10
+                            className={`px-2 py-0.5 rounded text-xs font-bold ${
+                              p.stock > 10
                                 ? "bg-green-100 text-green-700"
                                 : "bg-amber-100 text-amber-700"
-                              }`}
+                            }`}
                           >
                             {p.stock > 10 ? "✓" : "⚠"}
                           </span>
@@ -236,13 +285,21 @@ export default function Productos() {
                           {p.descripcion}
                         </p>
                       </div>
+                      <button
+                        onClick={() => verMovimientos(p)}
+                        className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                        title="Ver movimientos"
+                      >
+                        <Eye className="w-5 h-5 text-blue-600" />
+                      </button>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                       <div>
                         <span className="text-slate-600">Stock: </span>
                         <span
-                          className={`font-bold ${p.stock < 10 ? "text-amber-600" : "text-slate-900"
-                            }`}
+                          className={`font-bold ${
+                            p.stock < 10 ? "text-amber-600" : "text-slate-900"
+                          }`}
                         >
                           {p.stock}
                         </span>
@@ -272,6 +329,9 @@ export default function Productos() {
                       <th className="px-4 lg:px-6 py-3 lg:py-4 text-left text-xs sm:text-sm font-bold">
                         Unidades
                       </th>
+                      <th className="px-4 lg:px-6 py-3 lg:py-4 text-center text-xs sm:text-sm font-bold">
+                        Acciones
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -285,8 +345,9 @@ export default function Productos() {
                         </td>
                         <td className="px-4 lg:px-6 py-3 lg:py-4">
                           <span
-                            className={`font-bold text-sm ${p.stock < 10 ? "text-amber-600" : ""
-                              }`}
+                            className={`font-bold text-sm ${
+                              p.stock < 10 ? "text-amber-600" : ""
+                            }`}
                           >
                             {p.stock}
                           </span>
@@ -295,6 +356,18 @@ export default function Productos() {
                           <span className="px-2 lg:px-3 py-1 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700 capitalize">
                             {p.tipo_cantidad || "unidades"}
                           </span>
+                        </td>
+                        <td className="px-4 lg:px-6 py-3 lg:py-4 text-center">
+                          <button
+                            onClick={() => verMovimientos(p)}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 hover:bg-blue-100 rounded-lg transition-colors text-blue-600 font-medium text-sm"
+                            title="Ver movimientos"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span className="hidden lg:inline">
+                              Ver movimientos
+                            </span>
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -305,7 +378,7 @@ export default function Productos() {
           )}
         </div>
 
-        {/* Modal */}
+        {/* Modal Crear Producto */}
         {showModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -396,6 +469,9 @@ export default function Productos() {
                     placeholder="100"
                     className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none text-sm sm:text-base"
                   />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Este será el stock inicial del producto
+                  </p>
                 </div>
 
                 <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
@@ -415,6 +491,118 @@ export default function Productos() {
                     {isSubmitting ? "Guardando..." : "Guardar"}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Movimientos */}
+        {showMovimientosModal && selectedProducto && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50 flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+                    Movimientos del Producto
+                  </h3>
+                  <p className="text-sm text-slate-600 mt-1">
+                    {selectedProducto.descripcion} - Stock actual:{" "}
+                    {selectedProducto.stock}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowMovimientosModal(false)}
+                  className="p-1.5 hover:bg-white/50 rounded-lg transition"
+                >
+                  <X className="w-5 h-5 text-slate-600" />
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+                {loadingMovimientos ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin h-8 w-8 border-3 border-blue-600 border-t-transparent rounded-full" />
+                  </div>
+                ) : movimientos.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500">
+                      No hay movimientos registrados para este producto
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {movimientos.map((mov) => (
+                      <div
+                        key={mov.id}
+                        className={`border-2 rounded-lg p-4 transition-all ${
+                          mov.estado
+                            ? "border-slate-200 bg-white hover:shadow-md"
+                            : "border-red-200 bg-red-50/50 opacity-60"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              {mov.tipo === "ENTRADA" ? (
+                                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-100 text-green-700 rounded-lg text-sm font-semibold">
+                                  <TrendingUp className="w-4 h-4" />
+                                  ENTRADA
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-sm font-semibold">
+                                  <TrendingDown className="w-4 h-4" />
+                                  SALIDA
+                                </div>
+                              )}
+                              {!mov.estado && (
+                                <span className="px-2.5 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-semibold">
+                                  ANULADO
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="text-slate-900 font-medium mb-1">
+                              {mov.descripcion}
+                            </p>
+
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
+                              <span>Fecha: {mov.fecha}</span>
+                              {mov.numero_factura > 0 && (
+                                <span>Factura: #{mov.numero_factura}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <div
+                              className={`text-2xl font-bold ${
+                                mov.cantidad > 0
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              }`}
+                            >
+                              {mov.cantidad > 0 ? "+" : ""}
+                              {mov.cantidad}
+                            </div>
+                            <span className="text-xs text-slate-500">
+                              {selectedProducto.tipo_cantidad}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 sm:p-6 border-t bg-slate-50">
+                <button
+                  onClick={() => setShowMovimientosModal(false)}
+                  className="w-full bg-slate-600 hover:bg-slate-700 text-white rounded-lg py-3 font-semibold transition"
+                >
+                  Cerrar
+                </button>
               </div>
             </div>
           </div>
