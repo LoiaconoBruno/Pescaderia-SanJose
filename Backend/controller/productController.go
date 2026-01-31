@@ -139,3 +139,27 @@ func DeleteProduct(c *fiber.Ctx) error {
 		"mensaje": "Producto eliminado correctamente",
 	})
 }
+// GetMovementsByProductID obtiene todos los movimientos de un producto específico
+func GetMovementsByProductID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	// Verificar que el producto existe
+	var producto models.Product
+	if err := database.DB.First(&producto, id).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(models.ErrorResponse{
+			Error: "Producto no encontrado",
+		})
+	}
+
+	// Obtener todos los movimientos del producto
+	var movimientos []models.Movement
+	if err := database.DB.Where("producto_id = ?", id).
+		Order("fecha desc").
+		Find(&movimientos).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
+			Error: "Error al obtener movimientos del producto",
+		})
+	}
+
+	return c.JSON(movimientos)
+}

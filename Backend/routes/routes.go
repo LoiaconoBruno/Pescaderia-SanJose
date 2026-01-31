@@ -89,8 +89,9 @@ func SetupRoutes(app *fiber.App) {
 	productos := app.Group("/api/productos").Use(AuthMiddleware)
 	productos.Post("/", controller.CreateProduct)
 	productos.Get("/", controller.GetProducts)
-	productos.Get("/codigo/:codigo", controller.GetProductByCodigo) // ✨ Por código
+	productos.Get("/codigo/:codigo", controller.GetProductByCodigo)
 	productos.Get("/:id", controller.GetProductByID)
+	productos.Get("/:id/movimientos", controller.GetMovementsByProductID) // ✨ NUEVA RUTA
 	productos.Put("/:id", controller.UpdateProduct)
 	productos.Delete("/:id", controller.DeleteProduct)
 
