@@ -57,10 +57,19 @@ export default function Entradas() {
 
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDuplicadosModal, setShowDuplicadosModal] = useState(false);
+
   const [editingMovimiento, setEditingMovimiento] = useState<Movimiento | null>(
     null,
   );
   const [editCantidad, setEditCantidad] = useState(0);
+  const [productosDuplicados, setProductosDuplicados] = useState<
+    {
+      producto: Producto;
+      cantidadTotal: number;
+      instancias: number;
+    }[]
+  >([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,8 +79,6 @@ export default function Entradas() {
     new Set(),
   );
   const [mostrarTodas, setMostrarTodas] = useState(false);
-
-  // ✨ NUEVO: Estado para controlar qué facturas muestran todos sus productos
   const [facturasExpandidasProductos, setFacturasExpandidasProductos] =
     useState<Set<string>>(new Set());
 
@@ -189,7 +196,6 @@ export default function Entradas() {
     setExpandedFacturas(newExpanded);
   };
 
-  // ✨ NUEVO: Toggle para mostrar/ocultar productos adicionales
   const toggleProductosFactura = (key: string) => {
     const newExpanded = new Set(facturasExpandidasProductos);
     if (newExpanded.has(key)) newExpanded.delete(key);
@@ -197,10 +203,109 @@ export default function Entradas() {
     setFacturasExpandidasProductos(newExpanded);
   };
 
+  const calcularStockInicial = (productoId: number) => {
+    const producto = productos.find((p) => p.id === productoId);
+    if (!producto) return 0;
+
+    const totalMovimientos = movimientos
+      .filter((m) => m.producto_id === productoId)
+      .reduce((sum, m) => sum + m.cantidad, 0);
+
+    return producto.stock - totalMovimientos;
+  };
+
+  // Función para detectar duplicados
+  const detectarDuplicados = () => {
+    const duplicadosMap = new Map<
+      number,
+      { cantidadTotal: number; instancias: number }
+    >();
+
+    formData.productos.forEach((prod) => {
+      if (prod.producto_id !== 0) {
+        const existing = duplicadosMap.get(prod.producto_id);
+        if (existing) {
+          duplicadosMap.set(prod.producto_id, {
+            cantidadTotal: existing.cantidadTotal + prod.cantidad,
+            instancias: existing.instancias + 1,
+          });
+        } else {
+          duplicadosMap.set(prod.producto_id, {
+            cantidadTotal: prod.cantidad,
+            instancias: 1,
+          });
+        }
+      }
+    });
+
+    const duplicados = Array.from(duplicadosMap.entries())
+      .filter(([_, data]) => data.instancias > 1)
+      .map(([productoId, data]) => ({
+        producto: productos.find((p) => p.id === productoId)!,
+        cantidadTotal: data.cantidadTotal,
+        instancias: data.instancias,
+      }));
+
+    return duplicados;
+  };
+
+  // Función para consolidar productos
+  const consolidarProductos = () => {
+    const consolidados: ProductoEntrada[] = [];
+    const procesados = new Set<number>();
+
+    formData.productos.forEach((prod) => {
+      if (prod.producto_id === 0 || procesados.has(prod.producto_id)) return;
+
+      const cantidadTotal = formData.productos
+        .filter((p) => p.producto_id === prod.producto_id)
+        .reduce((sum, p) => sum + p.cantidad, 0);
+
+      consolidados.push({
+        producto_id: prod.producto_id,
+        cantidad: cantidadTotal,
+      });
+
+      procesados.add(prod.producto_id);
+    });
+
+    return consolidados;
+  };
+
+  // Función para enviar la factura
+  const enviarFactura = async (productosConsolidados?: ProductoEntrada[]) => {
+    setIsSubmitting(true);
+    setFormError("");
+
+    try {
+      const productosAEnviar = productosConsolidados || formData.productos;
+
+      for (const prod of productosAEnviar) {
+        await createEntrada({
+          numero_factura: formData.numero_factura,
+          fecha: formData.fecha,
+          producto_id: prod.producto_id,
+          descripcion: formData.descripcion,
+          cantidad: prod.cantidad,
+        });
+      }
+
+      await fetchMovimientos();
+
+      setFormData(initialForm);
+      setShowModal(false);
+      setShowDuplicadosModal(false);
+      showSuccess("¡Factura registrada exitosamente!");
+    } catch (err: any) {
+      setFormError(err?.message || "Error al registrar la factura");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError("");
-    setIsSubmitting(true);
 
     try {
       if (!formData.numero_factura || formData.numero_factura <= 0) {
@@ -225,26 +330,30 @@ export default function Entradas() {
         }
       }
 
-      for (const prod of formData.productos) {
-        await createEntrada({
-          numero_factura: formData.numero_factura,
-          fecha: formData.fecha,
-          producto_id: prod.producto_id,
-          descripcion: formData.descripcion,
-          cantidad: prod.cantidad,
-        });
+      // Detectar duplicados antes de enviar
+      const duplicados = detectarDuplicados();
+
+      if (duplicados.length > 0) {
+        setProductosDuplicados(duplicados);
+        setShowDuplicadosModal(true);
+        return;
       }
 
-      await fetchMovimientos();
-
-      setFormData(initialForm);
-      setShowModal(false);
-      showSuccess("¡Factura registrada exitosamente!");
+      // Si no hay duplicados, enviar normalmente
+      await enviarFactura();
     } catch (err: any) {
       setFormError(err?.message || "Error al registrar la factura");
-    } finally {
-      setIsSubmitting(false);
     }
+  };
+
+  const handleConfirmarConsolidacion = async () => {
+    const productosConsolidados = consolidarProductos();
+    await enviarFactura(productosConsolidados);
+  };
+
+  const handleCancelarConsolidacion = () => {
+    setShowDuplicadosModal(false);
+    setProductosDuplicados([]);
   };
 
   const handleAnularFactura = async (numeroFactura: number, fecha: string) => {
@@ -318,18 +427,6 @@ export default function Entradas() {
   };
 
   const globalError = formError || movimientosError || productosError;
-
-  // ✨ NUEVO: Función para calcular stock inicial de un producto
-  const calcularStockInicial = (productoId: number) => {
-    const producto = productos.find((p) => p.id === productoId);
-    if (!producto) return 0;
-
-    const totalMovimientos = movimientos
-      .filter((m) => m.producto_id === productoId)
-      .reduce((sum, m) => sum + m.cantidad, 0);
-
-    return producto.stock - totalMovimientos;
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
@@ -425,7 +522,6 @@ export default function Entradas() {
                 const productosExpandidos =
                   facturasExpandidasProductos.has(key);
 
-                // ✨ NUEVO: Limitar productos mostrados
                 const MAX_PRODUCTOS_PREVIEW = 5;
                 const productosAMostrar = productosExpandidos
                   ? factura.productos
@@ -544,7 +640,6 @@ export default function Entradas() {
                                   <p className="font-medium text-sm">
                                     {mov.producto?.descripcion}
                                   </p>
-                                  {/* ✨ NUEVO: Stock inicial en mobile */}
                                   <p className="text-xs text-slate-500 mt-1">
                                     Stock inicial:{" "}
                                     {calcularStockInicial(mov.producto_id)}
@@ -568,7 +663,6 @@ export default function Entradas() {
                             </div>
                           ))}
 
-                          {/* ✨ NUEVO: Botón Ver más en mobile */}
                           {hayMasProductos && (
                             <div className="p-3 bg-slate-50">
                               <button
@@ -629,7 +723,6 @@ export default function Entradas() {
                                   <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm">
                                     {mov.producto?.descripcion}
                                   </td>
-                                  {/* ✨ NUEVO: Columna de Stock Inicial */}
                                   <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm">
                                     <span className="px-2 py-1 bg-slate-100 rounded-lg font-semibold text-slate-700">
                                       {calcularStockInicial(mov.producto_id)}
@@ -658,7 +751,6 @@ export default function Entradas() {
                             </tbody>
                           </table>
 
-                          {/* ✨ NUEVO: Botón Ver más en desktop */}
                           {hayMasProductos && (
                             <div className="bg-slate-50 border-t">
                               <button
@@ -905,6 +997,108 @@ export default function Entradas() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Duplicados */}
+        {showDuplicadosModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-3 sm:p-4">
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-lg w-full">
+              <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+                <div className="flex items-center gap-3">
+                  <div className="bg-orange-100 p-2 rounded-lg">
+                    <AlertCircle className="w-6 h-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+                      Productos Duplicados Detectados
+                    </h3>
+                    <p className="text-sm text-slate-600 mt-0.5">
+                      Se encontraron productos repetidos en la factura
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6">
+                <div className="bg-blue-50 border-l-4 border-blue-400 rounded-lg p-3 sm:p-4 mb-4">
+                  <p className="text-sm text-blue-800 font-medium">
+                    ¿Deseas consolidar estos productos y sumar sus cantidades?
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {productosDuplicados.map((dup) => (
+                    <div
+                      key={dup.producto.id}
+                      className="bg-slate-50 rounded-lg p-3 sm:p-4 border-2 border-slate-200"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1">
+                          <p className="font-semibold text-slate-900">
+                            {dup.producto.descripcion}
+                          </p>
+                          <p className="text-xs text-slate-500 font-mono mt-0.5">
+                            Código: {dup.producto.codigo}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200">
+                        <div className="text-sm">
+                          <span className="text-slate-600">Aparece </span>
+                          <span className="font-bold text-orange-600">
+                            {dup.instancias} veces
+                          </span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="text-slate-600">Total: </span>
+                          <span className="font-bold text-green-600 text-lg">
+                            {dup.cantidadTotal}{" "}
+                            {dup.producto.tipo_cantidad || "u"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-green-800 mb-1">
+                        Si aceptas consolidar:
+                      </p>
+                      <ul className="text-xs text-green-700 space-y-1">
+                        <li>• Se enviarán los productos una sola vez</li>
+                        <li>• Las cantidades se sumarán automáticamente</li>
+                        <li>• La factura se registrará correctamente</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6 border-t bg-slate-50 flex flex-col-reverse sm:flex-row gap-3">
+                <button
+                  onClick={handleCancelarConsolidacion}
+                  className="flex-1 px-4 py-2.5 sm:py-3 border-2 border-slate-300 rounded-lg sm:rounded-xl hover:bg-white font-semibold text-sm sm:text-base transition"
+                  disabled={isSubmitting}
+                >
+                  Cancelar y Revisar
+                </button>
+                <button
+                  onClick={handleConfirmarConsolidacion}
+                  className="flex-1 px-4 py-2.5 sm:py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg sm:rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold shadow-lg text-sm sm:text-base transition disabled:opacity-50"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting
+                    ? "Consolidando..."
+                    : "✓ Consolidar y Registrar"}
+                </button>
+              </div>
             </div>
           </div>
         )}
