@@ -173,6 +173,23 @@ export default function Productos() {
     );
   }, [productos, searchTerm]);
 
+  // ✅ Función para calcular el stock inicial correctamente
+  const calcularStockInicial = () => {
+    if (!selectedProducto) return 0;
+
+    // Filtrar solo movimientos activos (no anulados)
+    const movimientosActivos = movimientos.filter((m) => m.estado);
+
+    // Calcular el impacto neto de todos los movimientos
+    const totalMovimientos = movimientosActivos.reduce((sum, m) => {
+      // ENTRADA suma (+), SALIDA resta (-)
+      return sum + (m.tipo === "ENTRADA" ? m.cantidad : -m.cantidad);
+    }, 0);
+
+    // Stock inicial = Stock actual - Total de movimientos
+    return selectedProducto.stock - totalMovimientos;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <main className="max-w-7xl mx-auto p-3 sm:p-6 lg:p-8">
@@ -200,6 +217,7 @@ export default function Productos() {
             Agregar Producto
           </button>
         </div>
+
         {/* Mensajes */}
         {successMessage && (
           <div className="bg-green-50 border-l-4 border-green-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex gap-2 sm:gap-3">
@@ -217,6 +235,7 @@ export default function Productos() {
             </p>
           </div>
         )}
+
         {/* Search */}
         <div className="mb-4 sm:mb-6 relative">
           <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 sm:w-5 sm:h-5" />
@@ -227,6 +246,7 @@ export default function Productos() {
             className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 border-2 border-slate-200 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white/80 text-sm sm:text-base"
           />
         </div>
+
         {/* Tabla / Cards */}
         <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden">
           {loading ? (
@@ -373,6 +393,7 @@ export default function Productos() {
             </>
           )}
         </div>
+
         {/* Modal Crear Producto */}
         {showModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
@@ -490,9 +511,7 @@ export default function Productos() {
             </div>
           </div>
         )}
-        {/* Modal Movimientos */}
-        // Modificar solo la parte del Modal de Movimientos en el componente
-        Productos
+
         {/* Modal Movimientos */}
         {showMovimientosModal && selectedProducto && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
@@ -505,13 +524,12 @@ export default function Productos() {
                   <p className="text-sm text-slate-600 mt-1">
                     {selectedProducto.descripcion}
                   </p>
-                  {/* ✨ NUEVO: Mostrar stock inicial y actual */}
+                  {/* ✅ CORRECTO: Mostrar stock inicial y actual */}
                   <div className="flex gap-4 mt-2 text-sm">
                     <div className="flex items-center gap-2">
                       <span className="text-slate-600">Stock Inicial:</span>
                       <span className="font-bold text-blue-600">
-                        {selectedProducto.stock -
-                          movimientos.reduce((sum, m) => sum + m.cantidad, 0)}
+                        {calcularStockInicial()}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -592,13 +610,13 @@ export default function Productos() {
                           <div className="text-right">
                             <div
                               className={`text-2xl font-bold ${
-                                mov.cantidad > 0
+                                mov.tipo === "ENTRADA"
                                   ? "text-green-600"
                                   : "text-red-600"
                               }`}
                             >
-                              {mov.cantidad > 0 ? "+" : ""}
-                              {mov.cantidad}
+                              {mov.tipo === "ENTRADA" ? "+" : "-"}
+                              {Math.abs(mov.cantidad)}
                             </div>
                             <span className="text-xs text-slate-500">
                               {selectedProducto.tipo_cantidad}
