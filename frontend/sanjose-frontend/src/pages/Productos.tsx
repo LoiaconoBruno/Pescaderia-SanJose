@@ -16,6 +16,7 @@ type Producto = {
   id: number;
   codigo: number;
   descripcion: string;
+  stock_inicial: number; // ⭐ NUEVO CAMPO
   stock: number;
   tipo_cantidad: "unidades" | "cajas" | "kg" | string;
 };
@@ -172,23 +173,6 @@ export default function Productos() {
         p.descripcion.toLowerCase().includes(term),
     );
   }, [productos, searchTerm]);
-
-  // ✅ Función para calcular el stock inicial correctamente
-  const calcularStockInicial = () => {
-    if (!selectedProducto) return 0;
-
-    // Filtrar solo movimientos activos (no anulados)
-    const movimientosActivos = movimientos.filter((m) => m.estado);
-
-    // Calcular el impacto neto de todos los movimientos
-    const totalMovimientos = movimientosActivos.reduce((sum, m) => {
-      // ENTRADA suma (+), SALIDA resta (-)
-      return sum + (m.tipo === "ENTRADA" ? m.cantidad : -m.cantidad);
-    }, 0);
-
-    // Stock inicial = Stock actual - Total de movimientos
-    return selectedProducto.stock - totalMovimientos;
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -524,18 +508,38 @@ export default function Productos() {
                   <p className="text-sm text-slate-600 mt-1">
                     {selectedProducto.descripcion}
                   </p>
-                  {/* ✅ CORRECTO: Mostrar stock inicial y actual */}
-                  <div className="flex gap-4 mt-2 text-sm">
+                  {/* ⭐ AHORA USA EL CAMPO stock_inicial DIRECTO DE LA BASE DE DATOS */}
+                  <div className="flex flex-wrap gap-3 mt-2 text-sm">
                     <div className="flex items-center gap-2">
                       <span className="text-slate-600">Stock Inicial:</span>
                       <span className="font-bold text-blue-600">
-                        {calcularStockInicial()}
+                        {selectedProducto.stock_inicial || 0}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-slate-600">Stock Actual:</span>
                       <span className="font-bold text-green-600">
                         {selectedProducto.stock}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-600">Diferencia:</span>
+                      <span
+                        className={`font-bold ${
+                          selectedProducto.stock -
+                            selectedProducto.stock_inicial >=
+                          0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {selectedProducto.stock -
+                          selectedProducto.stock_inicial >=
+                        0
+                          ? "+"
+                          : ""}
+                        {selectedProducto.stock -
+                          selectedProducto.stock_inicial}
                       </span>
                     </div>
                   </div>
@@ -560,7 +564,7 @@ export default function Productos() {
                       No hay movimientos registrados para este producto
                     </p>
                     <p className="text-sm text-slate-400 mt-2">
-                      Stock inicial: {selectedProducto.stock}
+                      Stock inicial: {selectedProducto.stock_inicial || 0}
                     </p>
                   </div>
                 ) : (
