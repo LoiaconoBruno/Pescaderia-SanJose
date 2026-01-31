@@ -29,12 +29,16 @@ func CreateProduct(c *fiber.Ctx) error {
 			Error: "El código de producto ya existe",
 		})
 	}
+
+	// ⭐ ACTUALIZADO: Guardar stock_inicial
 	producto := models.Product{
 		Codigo:       req.Codigo,
 		Descripcion:  req.Descripcion,
-		Stock:        req.Stock,
-		TipoCantidad: req.TipoCantidad, // ✅ AGREGADO
+		StockInicial: req.Stock, // ⭐ El stock inicial es el valor que ingresa
+		Stock:        req.Stock, // ⭐ El stock actual empieza igual
+		TipoCantidad: req.TipoCantidad,
 	}
+
 	if err := database.DB.Create(&producto).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
 			Error: "Error al crear el producto",
@@ -110,6 +114,9 @@ func UpdateProduct(c *fiber.Ctx) error {
 		producto.Stock = req.Stock
 	}
 
+	// ⚠️ NOTA: El stock_inicial NO se actualiza aquí
+	// Solo se actualiza el stock actual
+
 	if err := database.DB.Save(&producto).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(models.ErrorResponse{
 			Error: "Error al actualizar producto",
@@ -139,6 +146,7 @@ func DeleteProduct(c *fiber.Ctx) error {
 		"mensaje": "Producto eliminado correctamente",
 	})
 }
+
 // GetMovementsByProductID obtiene todos los movimientos de un producto específico
 func GetMovementsByProductID(c *fiber.Ctx) error {
 	id := c.Params("id")
