@@ -200,7 +200,6 @@ export default function Productos() {
             Agregar Producto
           </button>
         </div>
-
         {/* Mensajes */}
         {successMessage && (
           <div className="bg-green-50 border-l-4 border-green-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex gap-2 sm:gap-3">
@@ -210,7 +209,6 @@ export default function Productos() {
             </p>
           </div>
         )}
-
         {errorMessage && (
           <div className="bg-red-50 border-l-4 border-red-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 flex gap-2 sm:gap-3">
             <AlertCircle className="text-red-600 flex-shrink-0 w-5 h-5" />
@@ -219,7 +217,6 @@ export default function Productos() {
             </p>
           </div>
         )}
-
         {/* Search */}
         <div className="mb-4 sm:mb-6 relative">
           <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 sm:w-5 sm:h-5" />
@@ -230,7 +227,6 @@ export default function Productos() {
             className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 border-2 border-slate-200 rounded-lg sm:rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white/80 text-sm sm:text-base"
           />
         </div>
-
         {/* Tabla / Cards */}
         <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden">
           {loading ? (
@@ -377,7 +373,6 @@ export default function Productos() {
             </>
           )}
         </div>
-
         {/* Modal Crear Producto */}
         {showModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
@@ -495,7 +490,9 @@ export default function Productos() {
             </div>
           </div>
         )}
-
+        {/* Modal Movimientos */}
+        // Modificar solo la parte del Modal de Movimientos en el componente
+        Productos
         {/* Modal Movimientos */}
         {showMovimientosModal && selectedProducto && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
@@ -506,9 +503,24 @@ export default function Productos() {
                     Movimientos del Producto
                   </h3>
                   <p className="text-sm text-slate-600 mt-1">
-                    {selectedProducto.descripcion} - Stock actual:{" "}
-                    {selectedProducto.stock}
+                    {selectedProducto.descripcion}
                   </p>
+                  {/* ✨ NUEVO: Mostrar stock inicial y actual */}
+                  <div className="flex gap-4 mt-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-600">Stock Inicial:</span>
+                      <span className="font-bold text-blue-600">
+                        {selectedProducto.stock -
+                          movimientos.reduce((sum, m) => sum + m.cantidad, 0)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-600">Stock Actual:</span>
+                      <span className="font-bold text-green-600">
+                        {selectedProducto.stock}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowMovimientosModal(false)}
@@ -528,6 +540,9 @@ export default function Productos() {
                     <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                     <p className="text-slate-500">
                       No hay movimientos registrados para este producto
+                    </p>
+                    <p className="text-sm text-slate-400 mt-2">
+                      Stock inicial: {selectedProducto.stock}
                     </p>
                   </div>
                 ) : (

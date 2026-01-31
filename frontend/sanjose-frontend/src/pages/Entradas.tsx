@@ -71,6 +71,10 @@ export default function Entradas() {
   );
   const [mostrarTodas, setMostrarTodas] = useState(false);
 
+  // ✨ NUEVO: Estado para controlar qué facturas muestran todos sus productos
+  const [facturasExpandidasProductos, setFacturasExpandidasProductos] =
+    useState<Set<string>>(new Set());
+
   const getLocalDateString = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -124,7 +128,6 @@ export default function Entradas() {
 
     entradas.forEach((mov) => {
       if (!mov.numero_factura) return;
-      // Incluir el estado en la clave para que facturas con mismo número pero diferente estado se muestren separadas
       const key = `${mov.numero_factura}-${mov.fecha}-${mov.estado}`;
 
       if (!grupos.has(key)) {
@@ -140,15 +143,15 @@ export default function Entradas() {
       grupos.get(key).productos.push(mov);
     });
 
-    return Array.from(grupos.values()).sort(
-      (a, b) => b.fecha.localeCompare(a.fecha),
+    return Array.from(grupos.values()).sort((a, b) =>
+      b.fecha.localeCompare(a.fecha),
     );
   }, [entradas]);
 
   const filteredFacturas = useMemo(() => {
     const term = searchTerm.toLowerCase();
     return facturasAgrupadas
-      .filter((f: any) => f.estado === true) // Solo mostrar facturas activas
+      .filter((f: any) => f.estado === true)
       .filter(
         (f: any) =>
           f.numero_factura.toString().includes(term) ||
@@ -184,6 +187,14 @@ export default function Entradas() {
     if (newExpanded.has(key)) newExpanded.delete(key);
     else newExpanded.add(key);
     setExpandedFacturas(newExpanded);
+  };
+
+  // ✨ NUEVO: Toggle para mostrar/ocultar productos adicionales
+  const toggleProductosFactura = (key: string) => {
+    const newExpanded = new Set(facturasExpandidasProductos);
+    if (newExpanded.has(key)) newExpanded.delete(key);
+    else newExpanded.add(key);
+    setFacturasExpandidasProductos(newExpanded);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -237,7 +248,6 @@ export default function Entradas() {
   };
 
   const handleAnularFactura = async (numeroFactura: number, fecha: string) => {
-    // Verificar si hay salidas asociadas a productos de esta factura
     const movsFactura = entradas.filter(
       (m) =>
         m.numero_factura === numeroFactura &&
@@ -245,10 +255,8 @@ export default function Entradas() {
         m.estado === true,
     );
 
-    // Obtener IDs de productos de esta factura
     const productosFactura = movsFactura.map((m) => m.producto_id);
 
-    // Verificar si hay salidas de estos productos en la misma fecha
     const tieneSalidas = movimientos.some(
       (m) =>
         m.tipo === "SALIDA" &&
@@ -310,6 +318,18 @@ export default function Entradas() {
   };
 
   const globalError = formError || movimientosError || productosError;
+
+  // ✨ NUEVO: Función para calcular stock inicial de un producto
+  const calcularStockInicial = (productoId: number) => {
+    const producto = productos.find((p) => p.id === productoId);
+    if (!producto) return 0;
+
+    const totalMovimientos = movimientos
+      .filter((m) => m.producto_id === productoId)
+      .reduce((sum, m) => sum + m.cantidad, 0);
+
+    return producto.stock - totalMovimientos;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
@@ -402,20 +422,32 @@ export default function Entradas() {
               {facturasAMostrar.map((factura: any) => {
                 const key = `${factura.numero_factura}-${factura.fecha}-${factura.estado}`;
                 const isExpanded = expandedFacturas.has(key);
+                const productosExpandidos =
+                  facturasExpandidasProductos.has(key);
+
+                // ✨ NUEVO: Limitar productos mostrados
+                const MAX_PRODUCTOS_PREVIEW = 5;
+                const productosAMostrar = productosExpandidos
+                  ? factura.productos
+                  : factura.productos.slice(0, MAX_PRODUCTOS_PREVIEW);
+                const hayMasProductos =
+                  factura.productos.length > MAX_PRODUCTOS_PREVIEW;
 
                 return (
                   <div
                     key={key}
-                    className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${factura.estado
+                    className={`bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg border overflow-hidden ${
+                      factura.estado
                         ? "border-green-200"
                         : "border-red-200 opacity-60"
-                      }`}
+                    }`}
                   >
                     <div
-                      className={`p-3 sm:p-4 lg:p-6 ${factura.estado
+                      className={`p-3 sm:p-4 lg:p-6 ${
+                        factura.estado
                           ? "bg-gradient-to-r from-green-50 to-emerald-50"
                           : "bg-gray-100"
-                        } border-b`}
+                      } border-b`}
                     >
                       <div className="flex flex-col gap-3 sm:hidden">
                         <div className="flex items-center justify-between">
@@ -426,10 +458,11 @@ export default function Entradas() {
                               </span>
                             </div>
                             <div
-                              className={`px-2 py-1 rounded-lg text-xs font-bold ${factura.estado
+                              className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                                factura.estado
                                   ? "bg-green-100 text-green-700"
                                   : "bg-red-100 text-red-700"
-                                }`}
+                              }`}
                             >
                               {factura.estado ? "✓" : "✗"}
                             </div>
@@ -467,10 +500,11 @@ export default function Entradas() {
                             {formatFecha(factura.fecha)}
                           </div>
                           <div
-                            className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${factura.estado
+                            className={`px-2.5 lg:px-3 py-1 rounded-lg text-xs font-bold ${
+                              factura.estado
                                 ? "bg-green-100 text-green-700"
                                 : "bg-red-100 text-red-700"
-                              }`}
+                            }`}
                           >
                             {factura.estado ? "✓ Activa" : "✗ Anulada"}
                           </div>
@@ -497,7 +531,7 @@ export default function Entradas() {
                     {(isExpanded || window.innerWidth >= 640) && (
                       <>
                         <div className="sm:hidden divide-y">
-                          {factura.productos.map((mov: Movimiento) => (
+                          {productosAMostrar.map((mov: Movimiento) => (
                             <div
                               key={mov.id}
                               className="p-3 hover:bg-green-50/30"
@@ -509,6 +543,11 @@ export default function Entradas() {
                                   </p>
                                   <p className="font-medium text-sm">
                                     {mov.producto?.descripcion}
+                                  </p>
+                                  {/* ✨ NUEVO: Stock inicial en mobile */}
+                                  <p className="text-xs text-slate-500 mt-1">
+                                    Stock inicial:{" "}
+                                    {calcularStockInicial(mov.producto_id)}
                                   </p>
                                 </div>
                                 {factura.estado && (
@@ -528,6 +567,31 @@ export default function Entradas() {
                               </div>
                             </div>
                           ))}
+
+                          {/* ✨ NUEVO: Botón Ver más en mobile */}
+                          {hayMasProductos && (
+                            <div className="p-3 bg-slate-50">
+                              <button
+                                onClick={() => toggleProductosFactura(key)}
+                                className="w-full text-center py-2 text-green-600 hover:text-green-700 font-semibold text-sm flex items-center justify-center gap-2"
+                              >
+                                {productosExpandidos ? (
+                                  <>
+                                    <ChevronUp className="w-4 h-4" />
+                                    Ver menos
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="w-4 h-4" />
+                                    Ver más (
+                                    {factura.productos.length -
+                                      MAX_PRODUCTOS_PREVIEW}{" "}
+                                    productos más)
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
                         </div>
 
                         <div className="hidden sm:block overflow-x-auto">
@@ -541,6 +605,9 @@ export default function Entradas() {
                                   Descripción
                                 </th>
                                 <th className="px-4 lg:px-6 py-2 lg:py-3 text-left text-xs font-bold text-slate-700">
+                                  Stock Inicial
+                                </th>
+                                <th className="px-4 lg:px-6 py-2 lg:py-3 text-left text-xs font-bold text-slate-700">
                                   Cantidad
                                 </th>
                                 {factura.estado && (
@@ -551,7 +618,7 @@ export default function Entradas() {
                               </tr>
                             </thead>
                             <tbody>
-                              {factura.productos.map((mov: Movimiento) => (
+                              {productosAMostrar.map((mov: Movimiento) => (
                                 <tr
                                   key={mov.id}
                                   className="border-b hover:bg-green-50/30"
@@ -561,6 +628,12 @@ export default function Entradas() {
                                   </td>
                                   <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm">
                                     {mov.producto?.descripcion}
+                                  </td>
+                                  {/* ✨ NUEVO: Columna de Stock Inicial */}
+                                  <td className="px-4 lg:px-6 py-3 lg:py-4 text-sm">
+                                    <span className="px-2 py-1 bg-slate-100 rounded-lg font-semibold text-slate-700">
+                                      {calcularStockInicial(mov.producto_id)}
+                                    </span>
                                   </td>
                                   <td className="px-4 lg:px-6 py-3 lg:py-4">
                                     <span className="px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg lg:rounded-xl text-sm font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white">
@@ -584,6 +657,31 @@ export default function Entradas() {
                               ))}
                             </tbody>
                           </table>
+
+                          {/* ✨ NUEVO: Botón Ver más en desktop */}
+                          {hayMasProductos && (
+                            <div className="bg-slate-50 border-t">
+                              <button
+                                onClick={() => toggleProductosFactura(key)}
+                                className="w-full text-center py-3 text-green-600 hover:text-green-700 font-semibold text-sm flex items-center justify-center gap-2"
+                              >
+                                {productosExpandidos ? (
+                                  <>
+                                    <ChevronUp className="w-4 h-4" />
+                                    Ver menos
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="w-4 h-4" />
+                                    Ver{" "}
+                                    {factura.productos.length -
+                                      MAX_PRODUCTOS_PREVIEW}{" "}
+                                    productos más
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
                         </div>
 
                         {factura.estado && (
@@ -625,6 +723,7 @@ export default function Entradas() {
           </>
         )}
 
+        {/* Modal Nueva Factura */}
         {showModal && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
@@ -810,6 +909,7 @@ export default function Entradas() {
           </div>
         )}
 
+        {/* Modal Editar */}
         {showEditModal && editingMovimiento && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full">
